@@ -1,0 +1,9 @@
+export const BLOG_ENDPOINTS_BASE_PATH = 'blog'
+
+export const BLOG_ENDPOINTS_REMAINING_PATHS = {
+    BLOG: 'blog'
+}
+
+export const BLOG_ENDPOINTS = {
+    GET_BLOG_POSTS: BLOG_ENDPOINTS_BASE_PATH
+}

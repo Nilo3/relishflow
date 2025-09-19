@@ -1,0 +1,100 @@
+{
+  "name": "server",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "build": "nest build",
+    "build:serverless": "webpack --config webpack.config.js",
+    "start": "nest start",
+    "dev:localhost": "cross-env NODE_ENV=localhost nest start --watch",
+    "dev:develop": "cross-env NODE_ENV=develop nest start --watch",
+    "dev:production": "cross-env NODE_ENV=production nest start",
+    "start:debug": "nest start --debug --watch",
+    "nest:generate": "nest generate",
+    "deploy:develop": "cross-env NODE_ENV=develop serverless deploy --stage develop --force",
+    "deploy:production": "cross-env NODE_ENV=production serverless deploy --stage production --force",
+    "serverless:offline": "serverless offline",
+    "serverless": "serverless",
+    "type-coverage": "typescript-coverage-report",
+    "nest": "nest"
+  },
+  "typeCoverage": {
+    "atLeast": 100,
+    "detail": true,
+    "project": "./tsconfig.json",
+    "cache": true,
+    "ignoreUnread": true,
+    "ignoreCatch": true,
+    "updateIfHigher": true,
+    "reportUnusedIgnore": true,
+    "ignoreFiles": [
+      "dist/**/*"
+    ]
+  },
+  "dependencies": {
+    "@aws-sdk/client-cognito-identity-provider": "^3.645.0",
+    "@aws-sdk/client-s3": "^3.842.0",
+    "@nestjs/cache-manager": "^2.2.2",
+    "@nestjs/common": "^10.0.0",
+    "@nestjs/config": "^3.2.2",
+    "@nestjs/core": "^10.0.0",
+    "@nestjs/platform-express": "^10.0.0",
+    "@nestjs/swagger": "^7.3.1",
+    "@nestjs/typeorm": "^10.0.2",
+    "@types/aws-lambda": "^8.10.150",
+    "@types/cookie-parser": "^1.4.9",
+    "aws-serverless-express": "^3.4.0",
+    "cache-manager": "^5.7.6",
+    "class-transformer": "^0.5.1",
+    "class-validator": "^0.14.1",
+    "cookie-parser": "^1.4.7",
+    "date-fns": "^3.6.0",
+    "dotenv": "^16.4.5",
+    "jsonwebtoken": "^9.0.2",
+    "jwk-to-pem": "^2.0.6",
+    "pg": "^8.12.0",
+    "reflect-metadata": "^0.2.0",
+    "rxjs": "^7.8.1",
+    "typeorm": "^0.3.20",
+    "typeorm-naming-strategies": "^4.1.0",
+    "webpack-node-externals": "^3.0.0"
+  },
+  "devDependencies": {
+    "@nestjs/cli": "^10.0.0",
+    "@nestjs/schematics": "^10.0.0",
+    "@types/express": "^4.17.17",
+    "@types/jsonwebtoken": "^9.0.6",
+    "@types/node": "^20.17.24",
+    "@types/supertest": "^6.0.0",
+    "cross-env": "^7.0.3",
+    "serverless": "^4.17.1",
+    "serverless-offline": "^14.4.0",
+    "serverless-webpack": "^5.15.1",
+    "source-map-support": "^0.5.21",
+    "supertest": "^6.3.3",
+    "ts-jest": "^29.1.0",
+    "ts-loader": "^9.4.3",
+    "ts-node": "^10.9.1",
+    "tsconfig-paths": "^4.2.0",
+    "typescript": "^5.1.3",
+    "webpack": "^5.99.9",
+    "webpack-cli": "^6.0.1"
+  },
+  "jest": {
+    "moduleFileExtensions": [
+      "js",
+      "json",
+      "ts"
+    ],
+    "rootDir": "src",
+    "testRegex": ".*\\.spec\\.ts$",
+    "transform": {
+      "^.+\\.(t|j)s$": "ts-jest"
+    },
+    "collectCoverageFrom": [
+      "**/*.(t|j)s"
+    ],
+    "coverageDirectory": "../coverage",
+    "testEnvironment": "node"
+  }
+}

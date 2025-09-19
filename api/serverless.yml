@@ -1,0 +1,93 @@
+service: api-boilerplate
+useDotenv: true
+plugins:
+  - serverless-offline
+  - serverless-webpack
+
+provider:
+  name: aws
+  runtime: nodejs22.x
+  region: us-east-1
+  apiGateway:
+    binaryMediaTypes:
+      - '*/*'
+    minimumCompressionSize: 1024 # Enable compression for responses
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - s3:GetObject
+            - s3:PutObject
+            - s3:DeleteObject
+            - s3:ListBucket
+          Resource:
+            - "arn:aws:s3:::${env:S3_BUCKET_NAME}/*"
+            - "arn:aws:s3:::${env:S3_BUCKET_NAME}"
+        - Effect: Allow
+          Action:
+            - cognito-idp:*
+          Resource: "*"
+  environment:
+    # Application Configuration
+    NODE_ENV: ${env:NODE_ENV}
+    
+    # Database Configuration
+    DB_HOST: ${env:DB_HOST}
+    DB_PORT: ${env:DB_PORT}
+    DB_USERNAME: ${env:DB_USERNAME}
+    DB_PASSWORD: ${env:DB_PASSWORD}
+    DB_NAME: ${env:DB_NAME}
+    SSL_REJECT_UNAUTHORIZED: ${env:SSL_REJECT_UNAUTHORIZED}
+    AUTO_LOAD_ENTITIES: ${env:AUTO_LOAD_ENTITIES}
+    SYNCHRONIZE: ${env:SYNCHRONIZE}
+    DEFAULT_LIMIT: ${env:DEFAULT_LIMIT}
+    
+    # Cognito Configuration
+    USER_POOL_WEB_CLIENT_ID: ${env:USER_POOL_WEB_CLIENT_ID}
+    USER_POOL_WEB_CLIENT_SECRET: ${env:USER_POOL_WEB_CLIENT_SECRET}
+    
+    # Mail Configuration
+    MAIL_FROM: ${env:MAIL_FROM}
+    MAIL_HOST: ${env:MAIL_HOST}
+    MAIL_PASSWORD: ${env:MAIL_PASSWORD}
+    MAIL_USER: ${env:MAIL_USER}
+    
+    # S3 Configuration
+    S3_BUCKET_NAME: ${env:S3_BUCKET_NAME}
+
+    FRONTEND_URL: ${env:FRONTEND_URL}
+
+custom:
+  webpack:
+    webpackConfig: webpack.config.js
+    includeModules:
+      forceInclude:
+        - typeorm
+        - pg
+        - class-transformer
+        - class-validator
+        - reflect-metadata
+        - "@nestjs/core"
+        - "@nestjs/common"
+        - "@nestjs/platform-express"
+    packagerOptions:
+      scripts:
+        - rm -rf node_modules/typeorm/browser
+
+build:
+  esbuild: false  # Disable ESBuild to avoid conflicts with webpack
+
+functions:
+  main:
+    handler: dist/api/src/serverless.handler
+    url: true
+    timeout: 900 # 15 minutes in seconds
+    memorySize: 1024
+    events:
+      - http:
+          method: ANY
+          path: /
+      - http:
+          method: ANY
+          path: '{proxy+}'
