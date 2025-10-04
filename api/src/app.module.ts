@@ -10,10 +10,12 @@ import { S3Module } from './modules/s3/s3.module'
 import { HealthModule } from './modules/health/health.module'
 import { AuthGuard } from './guards/auth.guard'
 import { RolesInterceptor } from './interceptors/role.interceptor'
+import { RestaurantsModule } from './modules/restaurants/restaurants.module'
 
 @Module({
   imports: [
     ConfigModule.forRoot({
+      // eslint-disable-next-line @typescript-eslint/restrict-plus-operands
       envFilePath: '.env.' + process.env.NODE_ENV,
       isGlobal: true
     }),
@@ -31,12 +33,13 @@ import { RolesInterceptor } from './interceptors/role.interceptor'
       namingStrategy: new SnakeNamingStrategy(),
       ssl: JSON.parse(process.env.SSL_REJECT_UNAUTHORIZED ?? 'true')
         ? {
-          rejectUnauthorized: false
-        }
+            rejectUnauthorized: false
+          }
         : undefined
     }),
     AuthModule,
     UsersModule,
+    RestaurantsModule,
     S3Module,
     HealthModule
   ],
@@ -51,4 +54,4 @@ import { RolesInterceptor } from './interceptors/role.interceptor'
     }
   ]
 })
-export class AppModule { }
+export class AppModule {}
