@@ -1,5 +1,5 @@
 import { Column, Entity, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm'
-import { RestaurantStatus } from '../enums/restaurant.status.enum'
+import { RestaurantStatus } from '@shared/modules/restaurants/enums/restaurant.status.enum'
 import { User } from 'src/modules/users/entities/user.entity'
 import { RestaurantSchedule } from './restaurant-schedule.entity'
 import { RestaurantTable } from './restaurant-tables.entity'

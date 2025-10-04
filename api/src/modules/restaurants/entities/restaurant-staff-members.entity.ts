@@ -1,6 +1,6 @@
 import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm'
 import { Restaurant } from './restaurant.entity'
-import { RestaurantStaffMemberRole } from '../enums/restaurant-staff-member-roles.enum'
+import { RestaurantStaffMemberRole } from '@shared/modules/restaurants/enums/restaurant-staff-member-roles.enum'
 
 @Entity('restaurant_staff_members')
 export class RestaurantStaffMember {
