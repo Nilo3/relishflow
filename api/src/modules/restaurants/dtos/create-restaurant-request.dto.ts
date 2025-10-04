@@ -27,9 +27,9 @@ export class CreateRestaurantRequestDto implements ICreateRestaurantsRequest {
     description: 'The location of the restaurant',
     required: true
   })
-  @IsString({ message: 'Location must be a string' })
-  @IsNotEmpty({ message: 'Location is required' })
-  location: string
+  @IsString({ message: 'Address must be a string' })
+  @IsNotEmpty({ message: 'Address is required' })
+  addressLocation: string
 
   @ApiProperty({
     example: RestaurantStatus.ACTIVE,
