@@ -1,37 +1,37 @@
-import { Column, Entity, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm'
-import { RestaurantStatus } from '../enums/restaurant.status.enum'
+import { Column, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm'
+import { RestaurantStatus } from '@shared/modules/restaurants/enums/restaurant.status.enum'
+
 import { User } from 'src/modules/users/entities/user.entity'
+import { Menu } from 'src/modules/menus/entities/menu.entity'
+import { Product } from 'src/modules/products/entities/product.entity'
+
 import { RestaurantSchedule } from './restaurant-schedule.entity'
 import { RestaurantTable } from './restaurant-tables.entity'
 import { RestaurantStaffMember } from './restaurant-staff-members.entity'
-import { Menu } from 'src/modules/menus/entities/menu.entity'
-import { Product } from 'src/modules/products/entities/product.entity'
 
 @Entity('restaurants')
 export class Restaurant {
   @PrimaryGeneratedColumn('uuid')
   id: string
 
-  @ManyToOne(() => User, (user) => user.restaurants)
-  user: User
-
-  @Column('varchar')
-  userId: string
-
   @Column('varchar')
   name: string
 
-  @Column('varchar')
+  @Column('enum', { enum: RestaurantStatus, default: RestaurantStatus.PENDING_APPROVAL })
   status: RestaurantStatus
 
-  @Column('varchar')
+  @Column('boolean', { default: false })
   isOpen: boolean
 
   @Column('varchar')
   addressLocation: string
 
-  @Column('varchar')
+  @Column('varchar', { nullable: true })
   logoUrl: string
+
+  @ManyToOne(() => User, (user) => user.restaurants)
+  @JoinColumn({ name: 'userId' })
+  user: User
 
   @OneToMany(() => RestaurantSchedule, (schedule) => schedule.restaurant)
   schedules: RestaurantSchedule[]

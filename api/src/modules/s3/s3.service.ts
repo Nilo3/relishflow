@@ -1,14 +1,15 @@
-import type { S3Client, PutObjectCommandInput, GetObjectCommandInput, DeleteObjectCommandInput, ObjectCannedACL } from '@aws-sdk/client-s3'
+import type { S3Client, PutObjectCommandInput, GetObjectCommandInput, DeleteObjectCommandInput } from '@aws-sdk/client-s3'
 
 import { Readable } from 'stream'
 
 import { Injectable, Logger } from '@nestjs/common'
 import { PutObjectCommand, GetObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3'
-
 import { ResponseDto } from '@shared/helpers/response.helper'
-import { translateS3Error } from './helpers/translate-s3-errors.helper'
-import S3Config from '../../configs/s3.config'
 import { S3Codes, S3Messages } from '@shared/modules/s3/s3.responses'
+
+import S3Config from '../../configs/s3.config'
+
+import { translateS3Error } from './helpers/translate-s3-errors.helper'
 
 @Injectable()
 export class S3Service {
@@ -34,7 +35,7 @@ export class S3Service {
 
       await this.s3.send(command)
 
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion, @typescript-eslint/restrict-template-expressions
       const fileUrl = `https://${process.env.S3_BUCKET_NAME}.s3.amazonaws.com/${encodeURIComponent(params.Key!)}`
 
       this.logger.debug(`Archivo subido a S3 en la ruta ${key}`)
@@ -70,8 +71,6 @@ export class S3Service {
       }
     }
   }
-
-
 
   async downloadFile(bucketName: string, key: string): Promise<ResponseDto<Buffer>> {
     this.logger.debug(`Descargando archivo ${key} de S3...`)

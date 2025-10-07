@@ -1,6 +1,5 @@
 import { IsString, IsEmail, IsNotEmpty, IsEnum, IsOptional, IsUUID } from 'class-validator'
 import { ApiProperty } from '@nestjs/swagger'
-
 import { UserRoles } from '@shared/modules/users/enums/roles.enum'
 import { ICreateUserRequest } from '@shared/modules/users/interfaces/create-user-request.interface'
 

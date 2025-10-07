@@ -11,9 +11,9 @@ import { ValidationFilter } from './filters/validation.filter'
 async function bootstrap() {
   const app = await NestFactory.create(AppModule)
   const config = new DocumentBuilder()
-    .setTitle('Ingrese aquí el título de su aplicación')
-    .setDescription('Ingrese aquí la descripción de su aplicación')
-    .setVersion('1.0.1')
+    .setTitle('RelishFlow API V1')
+    .setDescription('API para la gestión de restaurantes')
+    .setVersion('1.0.0')
     .addBearerAuth({
       type: 'http',
       scheme: 'bearer',
