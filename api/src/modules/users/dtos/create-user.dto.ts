@@ -16,7 +16,7 @@ export class CreateUserRequestDto implements ICreateUserRequest {
   })
   @IsString({ message: 'Surname must be a string' })
   @IsNotEmpty({ message: 'Surname is required' })
-  surname: string
+  lastName: string
 
   @ApiProperty({
     example: 'user@example.com'
@@ -24,6 +24,20 @@ export class CreateUserRequestDto implements ICreateUserRequest {
   @IsEmail({}, { message: 'Email is not valid' })
   @IsNotEmpty({ message: 'Email is required' })
   email: string
+
+  @ApiProperty({
+    example: '1234567890'
+  })
+  @IsString({ message: 'Document number must be a string' })
+  @IsNotEmpty({ message: 'Document number is required' })
+  documentNumber: string
+
+  @ApiProperty({
+    example: '1234567890'
+  })
+  @IsString({ message: 'Phone must be a string' })
+  @IsNotEmpty({ message: 'Phone is required' })
+  phone: string
 
   @ApiProperty({
     example: UserRoles.Tenant

@@ -2,7 +2,7 @@ import { UserRoles } from '../enums/roles.enum';
 
 export interface ICreateUserRequest {
     name: string;
-    surname: string;
+    lastName: string;
     email: string;
     role: UserRoles;
     password: string;

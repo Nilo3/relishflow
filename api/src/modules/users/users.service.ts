@@ -1,19 +1,17 @@
 import { Repository } from 'typeorm'
-import { HttpStatus, Injectable, Logger, HttpException } from '@nestjs/common'
+import { HttpStatus, Injectable, Logger } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
-
 import { ResponseDto } from '@shared/helpers/response.helper'
-
-import { User } from './entities/user.entity'
-
 import { UserCodes, UserMessages } from '@shared/modules/users/users.constants'
-
-import { CreateUserRequestDto } from './dtos/create-user.dto'
-import { UpdateUserRequestDto } from './dtos/update-user.dto'
 import { ICreateUserResponse } from '@shared/modules/users/interfaces/create-user-response.interface'
 import { IUpdateUserResponse } from '@shared/modules/users/interfaces/update-user-response.interface'
 import { IGetUserResponse } from '@shared/modules/users/interfaces/get-user-response.interface'
+
 import { CognitoService } from '../cognito/cognito.service'
+
+import { CreateUserRequestDto } from './dtos/create-user.dto'
+import { UpdateUserRequestDto } from './dtos/update-user.dto'
+import { User } from './entities/user.entity'
 
 @Injectable()
 export class UsersService {
@@ -22,15 +20,13 @@ export class UsersService {
     @InjectRepository(User)
     private readonly usersRepository: Repository<User>,
     private readonly cognitoService: CognitoService
-  ) { }
+  ) {}
 
   async create(createUserDto: CreateUserRequestDto): Promise<ResponseDto<ICreateUserResponse>> {
     try {
       // Check if user already exists
       const existingUser = await this.usersRepository.findOne({
-        where: [
-          { email: createUserDto.email }
-        ]
+        where: [{ email: createUserDto.email }]
       })
 
       if (existingUser) {
@@ -43,7 +39,7 @@ export class UsersService {
         }
       }
 
-      this.logger.log(`Creating user ${createUserDto.name} ${createUserDto.surname} - ${createUserDto.role}...`)
+      this.logger.log(`Creating user ${createUserDto.name} ${createUserDto.lastName} - ${createUserDto.role}...`)
 
       // Create new user
       const user = this.usersRepository.create(createUserDto)
@@ -53,8 +49,10 @@ export class UsersService {
       const userResponse: ICreateUserResponse = {
         id: savedUser.id,
         name: savedUser.name,
-        surname: savedUser.lastName,
+        lastName: savedUser.lastName,
         email: savedUser.email,
+        documentNumber: savedUser.documentNumber,
+        phone: savedUser.phone,
         role: savedUser.role,
         createdAt: savedUser.createdAt,
         updatedAt: savedUser.updatedAt
