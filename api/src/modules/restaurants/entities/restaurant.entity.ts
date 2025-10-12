@@ -24,7 +24,7 @@ export class Restaurant {
   isOpen: boolean
 
   @Column('varchar')
-  addressLocation: string
+  address: string
 
   @Column('varchar', { nullable: true })
   logoUrl: string

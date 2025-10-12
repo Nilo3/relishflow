@@ -3,11 +3,13 @@ import { InjectRepository } from '@nestjs/typeorm'
 import { Repository } from 'typeorm'
 import { RestaurantCodes, RestaurantMessages } from '@shared/modules/restaurants/restaurants.contants'
 import { RestaurantStatus } from '@shared/modules/restaurants/enums/restaurant.status.enum'
+import { IFindAllRestaurantsResponse } from '@shared/modules/restaurants/interfaces/find-all-restaurants-response.interface'
 
 import { S3Service } from '../s3/s3.service'
 
 import { Restaurant } from './entities/restaurant.entity'
 import { CreateRestaurantRequestDto } from './dtos/create-restaurant-request.dto'
+import { UpdateRestaurantRequestDto } from './dtos/update-restaurant-request.dto'
 
 @Injectable()
 export class RestaurantsService {
@@ -36,7 +38,7 @@ export class RestaurantsService {
 
     const restaurant = this.restaurantRepository.create({
       name: body.name,
-      addressLocation: body.addressLocation,
+      address: body.address,
       isOpen: body.isOpen,
       status: body.status ?? RestaurantStatus.PENDING_APPROVAL
     })
@@ -73,6 +75,106 @@ export class RestaurantsService {
       code: RestaurantCodes.RESTAURANT_CREATED,
       message: RestaurantMessages[RestaurantCodes.RESTAURANT_CREATED].en,
       httpCode: HttpStatus.CREATED,
+      data: restaurant
+    }
+  }
+
+  async findAll(userId: string) {
+    this.logger.log(`Finding all restaurants for user: ${userId}`)
+
+    const restaurants = await this.restaurantRepository.find({ where: { user: { id: userId } }, relations: ['user'] })
+
+    if (restaurants.length === 0) {
+      return {
+        success: true,
+        code: RestaurantCodes.RESTAURANTS_FOUND,
+        message: RestaurantMessages[RestaurantCodes.RESTAURANTS_FOUND].en,
+        httpCode: HttpStatus.NOT_FOUND,
+        data: []
+      }
+    }
+
+    // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
+    this.logger.log(`Found ${restaurants.length} restaurants for user: ${userId}`)
+
+    const response: IFindAllRestaurantsResponse[] = restaurants.map((restaurant) => ({
+      id: restaurant.id,
+      name: restaurant.name,
+      status: restaurant.status,
+      isOpen: restaurant.isOpen,
+      address: restaurant.address,
+      logoUrl: restaurant.logoUrl
+    }))
+
+    return {
+      success: true,
+      code: RestaurantCodes.RESTAURANTS_FOUND,
+      message: RestaurantMessages[RestaurantCodes.RESTAURANTS_FOUND].en,
+      httpCode: HttpStatus.OK,
+      data: response
+    }
+  }
+
+  async update(id: string, body: UpdateRestaurantRequestDto, file?: Express.Multer.File) {
+    this.logger.log(`Updating restaurant with ID: ${id}`)
+
+    const restaurant = await this.restaurantRepository.findOne({ where: { id }, relations: ['user'] })
+
+    if (!restaurant) {
+      return {
+        success: false,
+        code: RestaurantCodes.RESTAURANT_NOT_FOUND,
+        message: RestaurantMessages[RestaurantCodes.RESTAURANT_NOT_FOUND].en,
+        httpCode: HttpStatus.NOT_FOUND,
+        data: null
+      }
+    }
+
+    if (body.name) {
+      restaurant.name = body.name
+    }
+
+    if (body.address) {
+      restaurant.address = body.address
+    }
+
+    if (body.isOpen !== undefined) {
+      restaurant.isOpen = body.isOpen
+    }
+
+    if (body.status) {
+      restaurant.status = body.status
+    }
+
+    // Subir la nueva imagen si se proporciona
+    if (file) {
+      const response = await this.s3Service.upload(`restaurants/${restaurant.id}/logo`, file.buffer, file.mimetype)
+
+      if (!response.success || !response.data) {
+        this.logger.error('Error uploading logo to S3')
+
+        return {
+          success: true, // Éxito parcial
+          code: RestaurantCodes.RESTAURANT_UPDATED_WITHOUT_LOGO,
+          message: RestaurantMessages[RestaurantCodes.RESTAURANT_UPDATED_WITHOUT_LOGO].en,
+          httpCode: HttpStatus.OK,
+          data: restaurant
+        }
+      }
+
+      // Actualizar la URL del logo en el restaurante
+      restaurant.logoUrl = response.data
+    }
+
+    await this.restaurantRepository.save(restaurant)
+
+    this.logger.log('Restaurant updated')
+
+    return {
+      success: true,
+      code: RestaurantCodes.RESTAURANT_UPDATED,
+      message: RestaurantMessages[RestaurantCodes.RESTAURANT_UPDATED].en,
+      httpCode: HttpStatus.OK,
       data: restaurant
     }
   }

@@ -1,35 +1,35 @@
-import { ICreateRestaurantsRequest } from '@shared/modules/restaurants/interfaces/create-restaurants-request.interface'
-import { RestaurantStatus } from '@shared/modules/restaurants/enums/restaurant.status.enum'
 import { ApiProperty } from '@nestjs/swagger'
-import { IsBoolean, IsNotEmpty, IsString } from 'class-validator'
+import { IsBoolean, IsOptional, IsString } from 'class-validator'
+import { IUpdateRestaurantRequestDto } from '@shared/modules/restaurants/interfaces/update-restaurant-request.inteface'
+import { RestaurantStatus } from '@shared/modules/restaurants/enums/restaurant.status.enum'
 
-export class CreateRestaurantRequestDto implements ICreateRestaurantsRequest {
+export class UpdateRestaurantRequestDto implements IUpdateRestaurantRequestDto {
   @ApiProperty({
     example: 'Pasta Palace',
     description: 'The name of the restaurant',
-    required: true
+    required: false
   })
   @IsString({ message: 'Name must be a string' })
-  @IsNotEmpty({ message: 'Name is required' })
-  name: string
+  @IsOptional()
+  name?: string
 
   @ApiProperty({
     example: true,
     description: 'Indicates if the restaurant is open',
-    required: true
+    required: false
   })
   @IsBoolean({ message: 'isOpen must be a boolean' })
-  @IsNotEmpty({ message: 'isOpen is required' })
-  isOpen: boolean
+  @IsOptional()
+  isOpen?: boolean
 
   @ApiProperty({
     example: '123 Pasta St, Food City',
     description: 'The location of the restaurant',
-    required: true
+    required: false
   })
   @IsString({ message: 'Address must be a string' })
-  @IsNotEmpty({ message: 'Address is required' })
-  address: string
+  @IsOptional()
+  address?: string
 
   @ApiProperty({
     example: RestaurantStatus.ACTIVE,

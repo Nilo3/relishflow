@@ -1,8 +1,10 @@
 import { RestaurantStatus } from '../enums/restaurant.status.enum'
 
-export interface ICreateRestaurantsRequest {
+export interface IFindAllRestaurantsResponse {
+    id: string
     name: string
+    status: RestaurantStatus
     isOpen: boolean
     address: string
-    status?: RestaurantStatus
+    logoUrl: string
 }
