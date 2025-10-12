@@ -36,7 +36,7 @@ export class RestaurantsService {
 
     const restaurant = this.restaurantRepository.create({
       name: body.name,
-      addressLocation: body.addressLocation,
+      address: body.address,
       isOpen: body.isOpen,
       status: body.status ?? RestaurantStatus.PENDING_APPROVAL
     })

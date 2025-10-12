@@ -37,7 +37,7 @@ export class RestaurantsController {
           example: true,
           description: 'Indicates if the restaurant is open'
         },
-        addressLocation: {
+        address: {
           type: 'string',
           example: '123 Pasta St, Food City',
           description: 'The location of the restaurant'

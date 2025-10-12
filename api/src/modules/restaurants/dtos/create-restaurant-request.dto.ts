@@ -29,7 +29,7 @@ export class CreateRestaurantRequestDto implements ICreateRestaurantsRequest {
   })
   @IsString({ message: 'Address must be a string' })
   @IsNotEmpty({ message: 'Address is required' })
-  addressLocation: string
+  address: string
 
   @ApiProperty({
     example: RestaurantStatus.ACTIVE,

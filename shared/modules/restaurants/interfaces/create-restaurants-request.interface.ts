@@ -3,6 +3,6 @@ import { RestaurantStatus } from '../enums/restaurant.status.enum'
 export interface ICreateRestaurantsRequest {
     name: string
     isOpen: boolean
-    addressLocation: string
+    address: string
     status?: RestaurantStatus
 }
