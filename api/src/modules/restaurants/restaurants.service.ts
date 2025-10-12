@@ -9,6 +9,7 @@ import { S3Service } from '../s3/s3.service'
 
 import { Restaurant } from './entities/restaurant.entity'
 import { CreateRestaurantRequestDto } from './dtos/create-restaurant-request.dto'
+import { UpdateRestaurantRequestDto } from './dtos/update-restaurant-request.dto'
 
 @Injectable()
 export class RestaurantsService {
@@ -111,6 +112,70 @@ export class RestaurantsService {
       message: RestaurantMessages[RestaurantCodes.RESTAURANTS_FOUND].en,
       httpCode: HttpStatus.OK,
       data: response
+    }
+  }
+
+  async update(id: string, body: UpdateRestaurantRequestDto, file?: Express.Multer.File) {
+    this.logger.log(`Updating restaurant with ID: ${id}`)
+
+    const restaurant = await this.restaurantRepository.findOne({ where: { id }, relations: ['user'] })
+
+    if (!restaurant) {
+      return {
+        success: false,
+        code: RestaurantCodes.RESTAURANT_NOT_FOUND,
+        message: RestaurantMessages[RestaurantCodes.RESTAURANT_NOT_FOUND].en,
+        httpCode: HttpStatus.NOT_FOUND,
+        data: null
+      }
+    }
+
+    if (body.name) {
+      restaurant.name = body.name
+    }
+
+    if (body.address) {
+      restaurant.address = body.address
+    }
+
+    if (body.isOpen !== undefined) {
+      restaurant.isOpen = body.isOpen
+    }
+
+    if (body.status) {
+      restaurant.status = body.status
+    }
+
+    // Subir la nueva imagen si se proporciona
+    if (file) {
+      const response = await this.s3Service.upload(`restaurants/${restaurant.id}/logo`, file.buffer, file.mimetype)
+
+      if (!response.success || !response.data) {
+        this.logger.error('Error uploading logo to S3')
+
+        return {
+          success: true, // Éxito parcial
+          code: RestaurantCodes.RESTAURANT_UPDATED_WITHOUT_LOGO,
+          message: RestaurantMessages[RestaurantCodes.RESTAURANT_UPDATED_WITHOUT_LOGO].en,
+          httpCode: HttpStatus.OK,
+          data: restaurant
+        }
+      }
+
+      // Actualizar la URL del logo en el restaurante
+      restaurant.logoUrl = response.data
+    }
+
+    await this.restaurantRepository.save(restaurant)
+
+    this.logger.log('Restaurant updated')
+
+    return {
+      success: true,
+      code: RestaurantCodes.RESTAURANT_UPDATED,
+      message: RestaurantMessages[RestaurantCodes.RESTAURANT_UPDATED].en,
+      httpCode: HttpStatus.OK,
+      data: restaurant
     }
   }
 }

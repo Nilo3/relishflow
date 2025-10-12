@@ -2,6 +2,7 @@ export enum RestaurantCodes {
   RESTAURANT_CREATED = 'RESTAURANT_CREATED',
   RESTAURANT_CREATED_WITHOUT_LOGO = 'RESTAURANT_CREATED_WITHOUT_LOGO',
   RESTAURANT_UPDATED = 'RESTAURANT_UPDATED',
+  RESTAURANT_UPDATED_WITHOUT_LOGO = 'RESTAURANT_UPDATED_WITHOUT_LOGO',
   RESTAURANT_DELETED = 'RESTAURANT_DELETED',
   RESTAURANT_FOUND = 'RESTAURANT_FOUND',
   RESTAURANTS_FOUND = 'RESTAURANTS_FOUND',
@@ -27,6 +28,10 @@ export const RestaurantMessages: Record<RestaurantCodes, Record<string, string>>
   [RestaurantCodes.RESTAURANT_UPDATED]: {
     en: 'Restaurant updated successfully',
     es: 'Restaurante actualizado exitosamente'
+  },
+  [RestaurantCodes.RESTAURANT_UPDATED_WITHOUT_LOGO]: {
+    en: 'Restaurant updated successfully but logo upload failed',
+    es: 'Restaurante actualizado exitosamente pero falló la subida del logo'
   },
   [RestaurantCodes.RESTAURANT_DELETED]: {
     en: 'Restaurant deleted successfully',
