@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm'
 import { Repository } from 'typeorm'
 import { RestaurantCodes, RestaurantMessages } from '@shared/modules/restaurants/restaurants.contants'
 import { RestaurantStatus } from '@shared/modules/restaurants/enums/restaurant.status.enum'
+import { IFindAllRestaurantsResponse } from '@shared/modules/restaurants/interfaces/find-all-restaurants-response.interface'
 
 import { S3Service } from '../s3/s3.service'
 
@@ -74,6 +75,42 @@ export class RestaurantsService {
       message: RestaurantMessages[RestaurantCodes.RESTAURANT_CREATED].en,
       httpCode: HttpStatus.CREATED,
       data: restaurant
+    }
+  }
+
+  async findAll(userId: string) {
+    this.logger.log(`Finding all restaurants for user: ${userId}`)
+
+    const restaurants = await this.restaurantRepository.find({ where: { user: { id: userId } }, relations: ['user'] })
+
+    if (restaurants.length === 0) {
+      return {
+        success: true,
+        code: RestaurantCodes.RESTAURANTS_FOUND,
+        message: RestaurantMessages[RestaurantCodes.RESTAURANTS_FOUND].en,
+        httpCode: HttpStatus.NOT_FOUND,
+        data: []
+      }
+    }
+
+    // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
+    this.logger.log(`Found ${restaurants.length} restaurants for user: ${userId}`)
+
+    const response: IFindAllRestaurantsResponse[] = restaurants.map((restaurant) => ({
+      id: restaurant.id,
+      name: restaurant.name,
+      status: restaurant.status,
+      isOpen: restaurant.isOpen,
+      address: restaurant.address,
+      logoUrl: restaurant.logoUrl
+    }))
+
+    return {
+      success: true,
+      code: RestaurantCodes.RESTAURANTS_FOUND,
+      message: RestaurantMessages[RestaurantCodes.RESTAURANTS_FOUND].en,
+      httpCode: HttpStatus.OK,
+      data: response
     }
   }
 }

@@ -1,4 +1,4 @@
-import { Post, Body, UseInterceptors, Controller, UploadedFile } from '@nestjs/common'
+import { Post, Body, UseInterceptors, Controller, UploadedFile, Get } from '@nestjs/common'
 import { FileInterceptor } from '@nestjs/platform-express'
 import { ApiOperation, ApiBody, ApiConsumes, ApiTags, ApiBearerAuth, ApiHeader } from '@nestjs/swagger'
 import { UserRoles } from '@shared/modules/users/enums/roles.enum'
@@ -59,5 +59,15 @@ export class RestaurantsController {
   @UseInterceptors(FileInterceptor('file'))
   async createRestaurant(@UserId() userId: string, @Body() body: CreateRestaurantRequestDto, @UploadedFile() file: Express.Multer.File) {
     return await this.restaurantsService.createRestaurant(userId, body, file)
+  }
+
+  @Get('find-all')
+  @ApiBearerAuth()
+  @Roles(UserRoles.SuperAdmin, UserRoles.Tenant)
+  @ApiHeader({ name: 'x-refresh-token' })
+  @ApiHeader({ name: 'x-id-token' })
+  @ApiOperation({ summary: 'Obtener todos los restaurantes de un usuario' })
+  async findAllRestaurants(@UserId() userId: string) {
+    return await this.restaurantsService.findAll(userId)
   }
 }
