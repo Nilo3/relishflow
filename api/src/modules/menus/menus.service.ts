@@ -2,6 +2,7 @@ import { Repository, In } from 'typeorm'
 import { HttpStatus, Injectable, Logger } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
 import { ResponseDto } from '@shared/helpers/response.helper'
+import { MenuCodes, MenuMessages } from '@shared/modules/menus/menus.constants'
 
 import { Restaurant } from 'src/modules/restaurants/entities/restaurant.entity'
 import { Product } from 'src/modules/products/entities/product.entity'
@@ -22,15 +23,15 @@ export class MenusService {
   ) {}
 
   async createMenu(userId: string, body: CreateMenuRequestDto): Promise<ResponseDto<Menu>> {
-    this.logger.log('Creating menu...')
+    this.logger.log('Creating menu for user ' + userId + '...')
 
     const restaurant = await this.restaurantsRepository.findOne({ where: { id: body.restaurantId }, relations: ['user'] })
 
     if (!restaurant || restaurant.user.id !== userId) {
       return {
         success: false,
-        code: 'MENU_RESTAURANT_NOT_OWNED',
-        message: 'Restaurant does not exist or is not owned by the user',
+        code: MenuCodes.MENU_RESTAURANT_NOT_OWNED,
+        message: MenuMessages[MenuCodes.MENU_RESTAURANT_NOT_OWNED].en,
         httpCode: HttpStatus.FORBIDDEN,
         data: null
       }
@@ -41,8 +42,8 @@ export class MenusService {
     if (products.length !== body.productIds.length) {
       return {
         success: false,
-        code: 'MENU_PRODUCTS_NOT_FOUND',
-        message: 'Some products were not found for this restaurant',
+        code: MenuCodes.MENU_PRODUCTS_NOT_FOUND,
+        message: MenuMessages[MenuCodes.MENU_PRODUCTS_NOT_FOUND].en,
         httpCode: HttpStatus.BAD_REQUEST,
         data: null
       }
@@ -63,8 +64,8 @@ export class MenusService {
 
     return {
       success: true,
-      code: 'MENU_CREATED',
-      message: 'Menu created successfully',
+      code: MenuCodes.MENU_CREATED,
+      message: MenuMessages[MenuCodes.MENU_CREATED].en,
       httpCode: HttpStatus.CREATED,
       data: menu
     }
@@ -78,8 +79,8 @@ export class MenusService {
     if (!menu) {
       return {
         success: false,
-        code: 'MENU_NOT_FOUND',
-        message: 'Menu not found',
+        code: MenuCodes.MENU_NOT_FOUND,
+        message: MenuMessages[MenuCodes.MENU_NOT_FOUND].en,
         httpCode: HttpStatus.NOT_FOUND,
         data: null
       }
@@ -88,8 +89,8 @@ export class MenusService {
     if (menu.restaurant.user.id !== userId) {
       return {
         success: false,
-        code: 'MENU_NOT_OWNED',
-        message: 'Menu is not owned by this user',
+        code: MenuCodes.MENU_NOT_OWNED,
+        message: MenuMessages[MenuCodes.MENU_NOT_OWNED].en,
         httpCode: HttpStatus.FORBIDDEN,
         data: null
       }
@@ -106,8 +107,8 @@ export class MenusService {
       if (products.length !== body.productIds.length) {
         return {
           success: false,
-          code: 'MENU_PRODUCTS_NOT_FOUND',
-          message: 'Some products were not found for this restaurant',
+          code: MenuCodes.MENU_PRODUCTS_NOT_FOUND,
+          message: MenuMessages[MenuCodes.MENU_PRODUCTS_NOT_FOUND].en,
           httpCode: HttpStatus.BAD_REQUEST,
           data: null
         }
@@ -132,8 +133,8 @@ export class MenusService {
 
     return {
       success: true,
-      code: 'MENU_UPDATED',
-      message: 'Menu updated successfully',
+      code: MenuCodes.MENU_UPDATED,
+      message: MenuMessages[MenuCodes.MENU_UPDATED].en,
       httpCode: HttpStatus.OK,
       data: menu
     }
@@ -147,8 +148,8 @@ export class MenusService {
     if (!menu) {
       return {
         success: true,
-        code: 'MENU_NOT_FOUND',
-        message: 'No active menu found for this restaurant',
+        code: MenuCodes.MENU_ACTIVE_NOT_FOUND,
+        message: MenuMessages[MenuCodes.MENU_ACTIVE_NOT_FOUND].en,
         httpCode: HttpStatus.OK,
         data: null
       }
@@ -156,8 +157,8 @@ export class MenusService {
 
     return {
       success: true,
-      code: 'MENU_FOUND',
-      message: 'Active menu found',
+      code: MenuCodes.MENU_FOUND,
+      message: MenuMessages[MenuCodes.MENU_FOUND].en,
       httpCode: HttpStatus.OK,
       data: menu
     }
