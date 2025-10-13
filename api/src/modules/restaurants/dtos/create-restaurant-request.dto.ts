@@ -1,7 +1,7 @@
 import { ICreateRestaurantsRequest } from '@shared/modules/restaurants/interfaces/create-restaurants-request.interface'
 import { RestaurantStatus } from '@shared/modules/restaurants/enums/restaurant.status.enum'
 import { ApiProperty } from '@nestjs/swagger'
-import { IsBoolean, IsNotEmpty, IsString } from 'class-validator'
+import { IsBoolean, IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator'
 
 export class CreateRestaurantRequestDto implements ICreateRestaurantsRequest {
   @ApiProperty({
@@ -37,5 +37,16 @@ export class CreateRestaurantRequestDto implements ICreateRestaurantsRequest {
     required: false,
     enum: RestaurantStatus
   })
+  @IsEnum(RestaurantStatus)
+  @IsOptional()
   status?: RestaurantStatus
+
+  @ApiProperty({
+    description: 'Logo image of the restaurant',
+    required: false,
+    type: 'string',
+    format: 'binary'
+  })
+  @IsOptional()
+  file?: any
 }
