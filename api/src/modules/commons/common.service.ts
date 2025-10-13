@@ -2,6 +2,7 @@ import { Injectable, HttpStatus, Logger } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
 import { In, Repository } from 'typeorm'
 import { ResponseDto } from '@shared/helpers/response.helper'
+import { CITIES_BY_COUNTRY, COUNTRIES_TO_SEED, DOCS_BY_COUNTRY, CommonsCodes, CommonsMessages } from '@shared/modules/commons/commons.constants'
 
 import { DocumentType } from './entities/document-type.entity'
 import { Country } from './entities/country.entity'
@@ -37,8 +38,8 @@ export class CommonService {
 
       return {
         success: true,
-        code: 'SEED_COMPLETED',
-        message: 'Seed completado exitosamente',
+        code: CommonsCodes.SEED_COMPLETED,
+        message: CommonsMessages[CommonsCodes.SEED_COMPLETED].es,
         httpCode: HttpStatus.OK,
         data: result
       }
@@ -51,20 +52,104 @@ export class CommonService {
 
       return {
         success: false,
-        code: 'SEED_ERROR',
-        message: 'Ocurrió un error durante el seed',
+        code: CommonsCodes.SEED_ERROR,
+        message: CommonsMessages[CommonsCodes.SEED_ERROR].es,
         httpCode: HttpStatus.INTERNAL_SERVER_ERROR,
         data: null
       }
     }
   }
 
+  async getAllCountries(): Promise<ResponseDto<{ id: string; name: string; code: string }[]>> {
+    const countries = await this.countriesRepository.find({ select: ['id', 'name', 'code'], order: { name: 'ASC' } })
+
+    return {
+      success: true,
+      code: CommonsCodes.COUNTRIES_FETCHED,
+      message: CommonsMessages[CommonsCodes.COUNTRIES_FETCHED].es,
+      httpCode: HttpStatus.OK,
+      data: countries
+    }
+  }
+
+  async getCitiesByCountry(countryCode: string): Promise<ResponseDto<{ id: string; name: string }[]>> {
+    if (!countryCode) {
+      return {
+        success: false,
+        code: CommonsCodes.COUNTRY_CODE_REQUIRED,
+        message: CommonsMessages[CommonsCodes.COUNTRY_CODE_REQUIRED].es,
+        httpCode: HttpStatus.BAD_REQUEST,
+        data: null
+      }
+    }
+
+    const country = await this.countriesRepository.findOne({ where: { code: countryCode } })
+
+    if (!country) {
+      return {
+        success: false,
+        code: CommonsCodes.COUNTRY_NOT_FOUND,
+        message: CommonsMessages[CommonsCodes.COUNTRY_NOT_FOUND].es,
+        httpCode: HttpStatus.NOT_FOUND,
+        data: null
+      }
+    }
+
+    const cities = await this.citiesRepository.find({
+      where: { country: { id: country.id } },
+      select: ['id', 'name'],
+      order: { name: 'ASC' }
+    })
+
+    return {
+      success: true,
+      code: CommonsCodes.CITIES_FETCHED,
+      message: CommonsMessages[CommonsCodes.CITIES_FETCHED].es,
+      httpCode: HttpStatus.OK,
+      data: cities
+    }
+  }
+
+  async getDocumentTypesByCountry(countryCode: string): Promise<ResponseDto<{ id: string; name: string }[]>> {
+    if (!countryCode) {
+      return {
+        success: false,
+        code: CommonsCodes.COUNTRY_CODE_REQUIRED,
+        message: CommonsMessages[CommonsCodes.COUNTRY_CODE_REQUIRED].es,
+        httpCode: HttpStatus.BAD_REQUEST,
+        data: null
+      }
+    }
+
+    const country = await this.countriesRepository.findOne({ where: { code: countryCode } })
+
+    if (!country) {
+      return {
+        success: false,
+        code: CommonsCodes.COUNTRY_NOT_FOUND,
+        message: CommonsMessages[CommonsCodes.COUNTRY_NOT_FOUND].es,
+        httpCode: HttpStatus.NOT_FOUND,
+        data: null
+      }
+    }
+
+    const documentTypes = await this.documentTypesRepository.find({
+      where: { country: { id: country.id } },
+      select: ['id', 'name'],
+      order: { name: 'ASC' }
+    })
+
+    return {
+      success: true,
+      code: CommonsCodes.DOCUMENT_TYPES_FETCHED,
+      message: CommonsMessages[CommonsCodes.DOCUMENT_TYPES_FETCHED].es,
+      httpCode: HttpStatus.OK,
+      data: documentTypes
+    }
+  }
+
   private async seedCountries(): Promise<number> {
-    const countriesToSeed: Pick<Country, 'name' | 'code'>[] = [
-      { name: 'Colombia', code: 'CO' },
-      { name: 'Argentina', code: 'AR' },
-      { name: 'España', code: 'ES' }
-    ]
+    const countriesToSeed: Pick<Country, 'name' | 'code'>[] = COUNTRIES_TO_SEED
 
     let countriesInserted = 0
 
@@ -81,11 +166,7 @@ export class CommonService {
   }
 
   private async seedCities(): Promise<number> {
-    const citiesByCountry: Record<string, string[]> = {
-      CO: ['Bogotá', 'Medellín', 'Cali', 'Barranquilla', 'Cartagena', 'Bucaramanga', 'Pereira', 'Santa Marta', 'Ibagué', 'Cúcuta'],
-      AR: ['Buenos Aires', 'Córdoba', 'Rosario', 'Mendoza', 'La Plata', 'Mar del Plata', 'San Miguel de Tucumán', 'Salta', 'Santa Fe', 'Corrientes'],
-      ES: ['Madrid', 'Barcelona', 'Valencia', 'Sevilla', 'Zaragoza', 'Málaga', 'Murcia', 'Palma', 'Las Palmas', 'Bilbao']
-    }
+    const citiesByCountry: Record<string, string[]> = CITIES_BY_COUNTRY
 
     let citiesInserted = 0
 
@@ -95,7 +176,7 @@ export class CommonService {
       if (!country) continue
 
       const existingCities = await this.citiesRepository.find({ where: { name: In(cityNames), country: { id: country.id } }, relations: ['country'] })
-      const existingPairs = new Set(existingCities.map((c) => `${c.name}|${country.id}`))
+      const existingPairs = new Set(existingCities.map((city) => `${city.name}|${country.id}`))
 
       const toCreate = cityNames.filter((name) => !existingPairs.has(`${name}|${country.id}`)).map((name) => this.citiesRepository.create({ name, country }))
 
@@ -109,11 +190,7 @@ export class CommonService {
   }
 
   private async seedDocumentTypes(): Promise<number> {
-    const docsByCountry: Record<string, string[]> = {
-      CO: ['CC', 'CE', 'NIT', 'Pasaporte'],
-      AR: ['DNI', 'Pasaporte'],
-      ES: ['NIE', 'NIF', 'Pasaporte']
-    }
+    const docsByCountry: Record<string, string[]> = DOCS_BY_COUNTRY
 
     let documentTypesInserted = 0
 
@@ -123,7 +200,7 @@ export class CommonService {
       if (!country) continue
 
       const existingDocs = await this.documentTypesRepository.find({ where: { name: In(docNames), country: { id: country.id } }, relations: ['country'] })
-      const existingPairs = new Set(existingDocs.map((d) => `${d.name}|${country.id}`))
+      const existingPairs = new Set(existingDocs.map((documentType) => `${documentType.name}|${country.id}`))
 
       const toCreate = docNames.filter((name) => !existingPairs.has(`${name}|${country.id}`)).map((name) => this.documentTypesRepository.create({ name, country }))
 
