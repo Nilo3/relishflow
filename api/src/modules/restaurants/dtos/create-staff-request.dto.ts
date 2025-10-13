@@ -14,6 +14,24 @@ export class CreateStaffRequestDto implements ICreateStaffRequestDto {
   restaurantId: string
 
   @ApiProperty({
+    example: 'john.doe@example.com',
+    description: 'The email of the staff member',
+    required: true
+  })
+  @IsString({ message: 'Email must be a string' })
+  @IsNotEmpty({ message: 'Email is required' })
+  email: string
+
+  @ApiProperty({
+    example: 'password123',
+    description: 'The password of the staff member',
+    required: true
+  })
+  @IsString({ message: 'Password must be a string' })
+  @IsNotEmpty({ message: 'Password is required' })
+  password: string
+
+  @ApiProperty({
     example: 'John Doe',
     description: 'The name of the staff member',
     required: true
@@ -21,6 +39,15 @@ export class CreateStaffRequestDto implements ICreateStaffRequestDto {
   @IsString({ message: 'Name must be a string' })
   @IsNotEmpty({ message: 'Name is required' })
   name: string
+
+  @ApiProperty({
+    example: 'Doe',
+    description: 'The last name of the staff member',
+    required: true
+  })
+  @IsString({ message: 'Last name must be a string' })
+  @IsNotEmpty({ message: 'Last name is required' })
+  lastName: string
 
   @ApiProperty({
     example: RestaurantStaffMemberRole.CASHIER,

@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common'
 import { TypeOrmModule } from '@nestjs/typeorm'
 
 import { S3Module } from '../s3/s3.module'
+import { CognitoModule } from '../cognito/cognito.module'
 
 import { RestaurantsController } from './restaurants.controller'
 import { RestaurantsService } from './restaurants.service'
@@ -11,7 +12,7 @@ import { RestaurantStaffMember } from './entities/restaurant-staff-members.entit
 import { RestaurantSchedule } from './entities/restaurant-schedule.entity'
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Restaurant, RestaurantTable, RestaurantStaffMember, RestaurantSchedule]), S3Module],
+  imports: [TypeOrmModule.forFeature([Restaurant, RestaurantTable, RestaurantStaffMember, RestaurantSchedule]), S3Module, CognitoModule],
   controllers: [RestaurantsController],
   providers: [RestaurantsService]
 })

@@ -8,6 +8,7 @@ import { IFindAllRestaurantsResponse } from '@shared/modules/restaurants/interfa
 import { User } from 'src/modules/users/entities/user.entity'
 
 import { S3Service } from '../s3/s3.service'
+import { CognitoService } from '../cognito/cognito.service'
 
 import { Restaurant } from './entities/restaurant.entity'
 import { CreateRestaurantRequestDto } from './dtos/create-restaurant-request.dto'
@@ -24,7 +25,10 @@ export class RestaurantsService {
   @InjectRepository(RestaurantStaffMember)
   private readonly staffRepository: Repository<RestaurantStaffMember>
 
-  constructor(private readonly s3Service: S3Service) {}
+  constructor(
+    private readonly s3Service: S3Service,
+    private readonly cognitoService: CognitoService
+  ) {}
 
   // Métodos para el restaurante
   async createRestaurant(userId: string, body: CreateRestaurantRequestDto, file?: Express.Multer.File) {
@@ -193,6 +197,41 @@ export class RestaurantsService {
   async createStaff(userId: string, body: CreateStaffRequestDto) {
     this.logger.log(`Creating staff for restaurant: ${userId}`)
 
+    // First, check if staff already exists in our database by email
+    const existingStaff = await this.staffRepository.findOne({ where: { email: body.email } })
+
+    if (existingStaff) {
+      this.logger.warn(`Staff with email ${body.email} already exists in database`)
+
+      return {
+        success: false,
+        code: RestaurantCodes.STAFF_ALREADY_EXISTS,
+        message: RestaurantMessages[RestaurantCodes.STAFF_ALREADY_EXISTS].en,
+        httpCode: HttpStatus.CONFLICT,
+        data: null
+      }
+    }
+
+    // Crear usuario en Cognito primero
+    const cognitoResult = await this.cognitoService.createUser({
+      email: body.email,
+      password: body.password,
+      firstNames: body.name,
+      lastNames: body.lastName
+    })
+
+    if (!cognitoResult.success || !cognitoResult.data) {
+      this.logger.error(`Error creating user in Cognito: ${cognitoResult.message}`)
+
+      return {
+        success: false,
+        code: RestaurantCodes.ERROR_CREATING_STAFF,
+        message: cognitoResult.message || 'Error creating user in Cognito',
+        httpCode: HttpStatus.BAD_REQUEST,
+        data: null
+      }
+    }
+
     const restaurant = await this.restaurantRepository.findOne({ where: { id: body.restaurantId, user: { id: userId } }, relations: ['user'] })
 
     if (!restaurant) {
@@ -205,7 +244,15 @@ export class RestaurantsService {
       }
     }
 
-    const staffMember = this.staffRepository.create({ ...body, restaurant })
+    const staffMember = this.staffRepository.create({
+      cognitoId: cognitoResult.data.cognitoId,
+      email: body.email,
+      name: body.name,
+      lastName: body.lastName,
+      role: body.role,
+      isActive: body.isActive,
+      restaurant
+    })
 
     await this.staffRepository.save(staffMember)
 
@@ -217,6 +264,33 @@ export class RestaurantsService {
       message: RestaurantMessages[RestaurantCodes.STAFF_CREATED].en,
       httpCode: HttpStatus.CREATED,
       data: staffMember
+    }
+  }
+
+  async findAllStaff(restaurantId: string) {
+    this.logger.log(`Finding all staff for restaurant: ${restaurantId}`)
+
+    const staffMembers = await this.staffRepository.find({ where: { restaurant: { id: restaurantId } }, relations: ['restaurant'] })
+
+    if (staffMembers.length === 0) {
+      return {
+        success: false,
+        code: RestaurantCodes.STAFFS_NOT_FOUND,
+        message: RestaurantMessages[RestaurantCodes.STAFFS_NOT_FOUND].en,
+        httpCode: HttpStatus.NOT_FOUND,
+        data: []
+      }
+    }
+
+    // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
+    this.logger.log(`Found ${staffMembers.length} staff members for restaurant: ${restaurantId}`)
+
+    return {
+      success: true,
+      code: RestaurantCodes.STAFFS_FOUND,
+      message: RestaurantMessages[RestaurantCodes.STAFFS_FOUND].en,
+      httpCode: HttpStatus.OK,
+      data: staffMembers
     }
   }
 }

@@ -9,13 +9,19 @@ export class RestaurantStaffMember {
   id: string
 
   @Column('varchar')
+  cognitoId: string
+
+  @Column('varchar', { unique: true })
+  email: string
+
+  @Column('varchar')
   name: string
+
+  @Column('varchar')
+  lastName: string
 
   @Column('enum', { enum: RestaurantStaffMemberRole })
   role: RestaurantStaffMemberRole
-
-  @Column('varchar')
-  loginCode: string
 
   @Column('boolean', { default: true })
   isActive: boolean
