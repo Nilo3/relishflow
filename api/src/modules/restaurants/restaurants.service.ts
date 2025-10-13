@@ -5,10 +5,11 @@ import { RestaurantCodes, RestaurantMessages } from '@shared/modules/restaurants
 import { RestaurantStatus } from '@shared/modules/restaurants/enums/restaurant.status.enum'
 import { IFindAllRestaurantsResponse } from '@shared/modules/restaurants/interfaces/find-all-restaurants-response.interface'
 
+import { User } from 'src/modules/users/entities/user.entity'
+
 import { S3Service } from '../s3/s3.service'
 
 import { Restaurant } from './entities/restaurant.entity'
-import { User } from 'src/modules/users/entities/user.entity'
 import { CreateRestaurantRequestDto } from './dtos/create-restaurant-request.dto'
 import { UpdateRestaurantRequestDto } from './dtos/update-restaurant-request.dto'
 
@@ -21,7 +22,7 @@ export class RestaurantsService {
 
   constructor(private readonly s3Service: S3Service) {}
 
-  async createRestaurant(userId: string, body: CreateRestaurantRequestDto, file: Express.Multer.File) {
+  async createRestaurant(userId: string, body: CreateRestaurantRequestDto, file?: Express.Multer.File) {
     this.logger.log('Creating restaurant...')
 
     // Verificar si ya existe un restaurante con el mismo nombre y usuario

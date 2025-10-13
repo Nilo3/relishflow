@@ -1,8 +1,7 @@
-import { Post, Body, UseInterceptors, Controller, UploadedFile, Get, Query } from '@nestjs/common'
+import { Post, Body, UseInterceptors, Controller, UploadedFile, Get, Query, Patch } from '@nestjs/common'
 import { FileInterceptor } from '@nestjs/platform-express'
 import { ApiOperation, ApiBody, ApiConsumes, ApiTags, ApiBearerAuth, ApiHeader } from '@nestjs/swagger'
 import { UserRoles } from '@shared/modules/users/enums/roles.enum'
-import { RestaurantStatus } from '@shared/modules/restaurants/enums/restaurant.status.enum'
 
 import { UserId } from 'src/decorators/user-id.decorator'
 import { Roles } from 'src/decorators/roles.decorator'
@@ -26,7 +25,7 @@ export class RestaurantsController {
   @ApiConsumes('multipart/form-data')
   @ApiBody({ type: CreateRestaurantRequestDto })
   @UseInterceptors(FileInterceptor('file'))
-  async createRestaurant(@UserId() userId: string, @Body() body: CreateRestaurantRequestDto, @UploadedFile() file: Express.Multer.File) {
+  async createRestaurant(@UserId() userId: string, @Body() body: CreateRestaurantRequestDto, @UploadedFile() file?: Express.Multer.File) {
     return await this.restaurantsService.createRestaurant(userId, body, file)
   }
 
@@ -42,46 +41,14 @@ export class RestaurantsController {
   }
 
   // Métodos de actualización
-  @Post('update/:id')
+  @Patch('update/:id')
   @ApiBearerAuth()
   @Roles(UserRoles.SuperAdmin, UserRoles.Tenant)
   @ApiHeader({ name: 'x-refresh-token' })
   @ApiHeader({ name: 'x-id-token' })
   @ApiOperation({ summary: 'Actualizar un restaurante' })
   @ApiConsumes('multipart/form-data')
-  @ApiBody({
-    schema: {
-      type: 'object',
-      properties: {
-        name: {
-          type: 'string',
-          example: 'Pasta Palace',
-          description: 'The name of the restaurant'
-        },
-        isOpen: {
-          type: 'boolean',
-          example: true,
-          description: 'Indicates if the restaurant is open'
-        },
-        address: {
-          type: 'string',
-          example: '123 Pasta St, Food City',
-          description: 'The location of the restaurant'
-        },
-        status: {
-          type: 'string',
-          enum: Object.values(RestaurantStatus),
-          description: 'The status of the restaurant (optional)',
-          example: RestaurantStatus.PENDING_APPROVAL
-        },
-        file: {
-          type: 'string',
-          format: 'binary',
-          description: 'Logo image of the restaurant'
-        }
-      }
-    }
-  })
+  @ApiBody({ type: UpdateRestaurantRequestDto })
   @UseInterceptors(FileInterceptor('file'))
   async updateRestaurant(@Query('id') id: string, @Body() body: UpdateRestaurantRequestDto, @UploadedFile() file?: Express.Multer.File) {
     return await this.restaurantsService.update(id, body, file)

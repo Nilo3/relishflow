@@ -48,5 +48,5 @@ export class CreateRestaurantRequestDto implements ICreateRestaurantsRequest {
     format: 'binary'
   })
   @IsOptional()
-  file?: any
+  file?: unknown
 }
