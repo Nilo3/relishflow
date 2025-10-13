@@ -12,6 +12,7 @@ import { AuthGuard } from './guards/auth.guard'
 import { RolesInterceptor } from './interceptors/role.interceptor'
 import { RestaurantsModule } from './modules/restaurants/restaurants.module'
 import { MenusModule } from './modules/menus/menus.module'
+import { CommonModule } from './modules/commons/common.module'
 
 @Module({
   imports: [
@@ -42,6 +43,7 @@ import { MenusModule } from './modules/menus/menus.module'
     UsersModule,
     RestaurantsModule,
     MenusModule,
+    CommonModule,
     S3Module,
     HealthModule
   ],

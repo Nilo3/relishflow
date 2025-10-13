@@ -1,6 +1,7 @@
-import { Column, CreateDateColumn, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm'
+import { Column, CreateDateColumn, Entity, OneToMany, PrimaryGeneratedColumn, ManyToOne } from 'typeorm'
 
 import { User } from 'src/modules/users/entities/user.entity'
+import { Country } from 'src/modules/commons/entities/country.entity'
 
 @Entity('cities')
 export class City {
@@ -9,6 +10,9 @@ export class City {
 
   @Column('varchar')
   name: string
+
+  @ManyToOne(() => Country, (country: Country) => country.cities)
+  country: Country
 
   @CreateDateColumn({
     type: 'timestamp without time zone',
@@ -22,6 +26,6 @@ export class City {
   })
   updatedAt: Date
 
-  @OneToMany(() => User, (user) => user.city)
+  @OneToMany(() => User, (user: User) => user.city)
   users: User[]
 }
