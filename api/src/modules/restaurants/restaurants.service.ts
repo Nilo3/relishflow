@@ -12,6 +12,8 @@ import { S3Service } from '../s3/s3.service'
 import { Restaurant } from './entities/restaurant.entity'
 import { CreateRestaurantRequestDto } from './dtos/create-restaurant-request.dto'
 import { UpdateRestaurantRequestDto } from './dtos/update-restaurant-request.dto'
+import { RestaurantStaffMember } from './entities/restaurant-staff-members.entity'
+import { CreateStaffRequestDto } from './dtos/create-staff-request.dto'
 
 @Injectable()
 export class RestaurantsService {
@@ -19,9 +21,12 @@ export class RestaurantsService {
 
   @InjectRepository(Restaurant)
   private readonly restaurantRepository: Repository<Restaurant>
+  @InjectRepository(RestaurantStaffMember)
+  private readonly staffRepository: Repository<RestaurantStaffMember>
 
   constructor(private readonly s3Service: S3Service) {}
 
+  // Métodos para el restaurante
   async createRestaurant(userId: string, body: CreateRestaurantRequestDto, file?: Express.Multer.File) {
     this.logger.log('Creating restaurant...')
 
@@ -181,6 +186,37 @@ export class RestaurantsService {
       message: RestaurantMessages[RestaurantCodes.RESTAURANT_UPDATED].en,
       httpCode: HttpStatus.OK,
       data: restaurant
+    }
+  }
+
+  // Métodos para el personal
+  async createStaff(userId: string, body: CreateStaffRequestDto) {
+    this.logger.log(`Creating staff for restaurant: ${userId}`)
+
+    const restaurant = await this.restaurantRepository.findOne({ where: { id: body.restaurantId, user: { id: userId } }, relations: ['user'] })
+
+    if (!restaurant) {
+      return {
+        success: false,
+        code: RestaurantCodes.RESTAURANT_NOT_FOUND,
+        message: RestaurantMessages[RestaurantCodes.RESTAURANT_NOT_FOUND].en,
+        httpCode: HttpStatus.NOT_FOUND,
+        data: null
+      }
+    }
+
+    const staffMember = this.staffRepository.create({ ...body, restaurant })
+
+    await this.staffRepository.save(staffMember)
+
+    this.logger.log('Staff member created')
+
+    return {
+      success: true,
+      code: RestaurantCodes.STAFF_CREATED,
+      message: RestaurantMessages[RestaurantCodes.STAFF_CREATED].en,
+      httpCode: HttpStatus.CREATED,
+      data: staffMember
     }
   }
 }

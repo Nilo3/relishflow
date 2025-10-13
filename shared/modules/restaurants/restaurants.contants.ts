@@ -13,7 +13,8 @@ export enum RestaurantCodes {
   ERROR_UPDATING_RESTAURANT = 'ERROR_UPDATING_RESTAURANT',
   ERROR_DELETING_RESTAURANT = 'ERROR_DELETING_RESTAURANT',
   ERROR_FINDING_RESTAURANT = 'ERROR_FINDING_RESTAURANT',
-  ERROR_FINDING_RESTAURANTS = 'ERROR_FINDING_RESTAURANTS'
+  ERROR_FINDING_RESTAURANTS = 'ERROR_FINDING_RESTAURANTS',
+  STAFF_CREATED = 'STAFF_CREATED'
 }
 
 export const RestaurantMessages: Record<RestaurantCodes, Record<string, string>> = {
@@ -76,5 +77,9 @@ export const RestaurantMessages: Record<RestaurantCodes, Record<string, string>>
   [RestaurantCodes.ERROR_FINDING_RESTAURANTS]: {
     en: 'Error finding restaurants',
     es: 'Error al buscar los restaurantes'
+  },
+  [RestaurantCodes.STAFF_CREATED]: {
+    en: 'Staff member created successfully',
+    es: 'Miembro del personal creado exitosamente'
   }
 }
