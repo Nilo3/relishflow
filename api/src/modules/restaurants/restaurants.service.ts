@@ -8,6 +8,7 @@ import { IFindAllRestaurantsResponse } from '@shared/modules/restaurants/interfa
 import { S3Service } from '../s3/s3.service'
 
 import { Restaurant } from './entities/restaurant.entity'
+import { User } from 'src/modules/users/entities/user.entity'
 import { CreateRestaurantRequestDto } from './dtos/create-restaurant-request.dto'
 import { UpdateRestaurantRequestDto } from './dtos/update-restaurant-request.dto'
 
@@ -40,7 +41,8 @@ export class RestaurantsService {
       name: body.name,
       address: body.address,
       isOpen: body.isOpen,
-      status: body.status ?? RestaurantStatus.PENDING_APPROVAL
+      status: body.status ?? RestaurantStatus.PENDING_APPROVAL,
+      user: { id: userId } as User
     })
 
     // Primero guardamos para obtener el ID
@@ -49,26 +51,28 @@ export class RestaurantsService {
     this.logger.log(`Restaurant created with ID: ${restaurant.id}`)
 
     // Subimos la imagen solo si se proporcionó un archivo
-    const response = await this.s3Service.upload(`restaurants/${restaurant.id}/logo`, file.buffer, file.mimetype)
+    if (file) {
+      const response = await this.s3Service.upload(`restaurants/${restaurant.id}/logo`, file.buffer, file.mimetype)
 
-    if (!response.success || !response.data) {
-      this.logger.error('Error uploading logo to S3')
+      if (!response.success || !response.data) {
+        this.logger.error('Error uploading logo to S3')
 
-      return {
-        success: true, // Éxito parcial
-        code: RestaurantCodes.RESTAURANT_CREATED_WITHOUT_LOGO,
-        message: RestaurantMessages[RestaurantCodes.RESTAURANT_CREATED_WITHOUT_LOGO].en,
-        httpCode: HttpStatus.CREATED, // Mantenemos 201 porque el recurso principal fue creado
-        data: restaurant
+        return {
+          success: true, // Éxito parcial
+          code: RestaurantCodes.RESTAURANT_CREATED_WITHOUT_LOGO,
+          message: RestaurantMessages[RestaurantCodes.RESTAURANT_CREATED_WITHOUT_LOGO].en,
+          httpCode: HttpStatus.CREATED, // Mantenemos 201 porque el recurso principal fue creado
+          data: restaurant
+        }
       }
+
+      // Actualizamos la URL del logo en el restaurante
+      restaurant.logoUrl = response.data
+
+      await this.restaurantRepository.save(restaurant)
+
+      this.logger.log('Restaurant logo uploaded and restaurant updated')
     }
-
-    // Actualizamos la URL del logo en el restaurante
-    restaurant.logoUrl = response.data
-
-    await this.restaurantRepository.save(restaurant)
-
-    this.logger.log('Restaurant logo uploaded and restaurant updated')
 
     return {
       success: true,

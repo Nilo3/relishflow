@@ -24,40 +24,7 @@ export class RestaurantsController {
   @ApiHeader({ name: 'x-id-token' })
   @ApiOperation({ summary: 'Crear un restaurante' })
   @ApiConsumes('multipart/form-data')
-  @ApiBody({
-    schema: {
-      type: 'object',
-      required: ['name', 'isOpen', 'addressLocation'],
-      properties: {
-        name: {
-          type: 'string',
-          example: 'Pasta Palace',
-          description: 'The name of the restaurant'
-        },
-        isOpen: {
-          type: 'boolean',
-          example: true,
-          description: 'Indicates if the restaurant is open'
-        },
-        address: {
-          type: 'string',
-          example: '123 Pasta St, Food City',
-          description: 'The location of the restaurant'
-        },
-        status: {
-          type: 'string',
-          enum: Object.values(RestaurantStatus),
-          description: 'The status of the restaurant (optional)',
-          example: RestaurantStatus.PENDING_APPROVAL
-        },
-        file: {
-          type: 'string',
-          format: 'binary',
-          description: 'Logo image of the restaurant'
-        }
-      }
-    }
-  })
+  @ApiBody({ type: CreateRestaurantRequestDto })
   @UseInterceptors(FileInterceptor('file'))
   async createRestaurant(@UserId() userId: string, @Body() body: CreateRestaurantRequestDto, @UploadedFile() file: Express.Multer.File) {
     return await this.restaurantsService.createRestaurant(userId, body, file)

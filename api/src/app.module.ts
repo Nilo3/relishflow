@@ -11,6 +11,7 @@ import { HealthModule } from './modules/health/health.module'
 import { AuthGuard } from './guards/auth.guard'
 import { RolesInterceptor } from './interceptors/role.interceptor'
 import { RestaurantsModule } from './modules/restaurants/restaurants.module'
+import { MenusModule } from './modules/menus/menus.module'
 
 @Module({
   imports: [
@@ -40,6 +41,7 @@ import { RestaurantsModule } from './modules/restaurants/restaurants.module'
     AuthModule,
     UsersModule,
     RestaurantsModule,
+    MenusModule,
     S3Module,
     HealthModule
   ],

@@ -1,7 +1,9 @@
-import { Restaurant } from 'src/modules/restaurants/entities/restaurant.entity'
 import { Column, Entity, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm'
-import { MenuStatus } from '../enums/menu-status.enum'
+
+import { Restaurant } from 'src/modules/restaurants/entities/restaurant.entity'
 import { Product } from 'src/modules/products/entities/product.entity'
+
+import { MenuStatus } from '../enums/menu-status.enum'
 
 @Entity('menus')
 export class Menu {
@@ -11,7 +13,7 @@ export class Menu {
   @ManyToOne(() => Restaurant, (restaurant) => restaurant.menus)
   restaurant: Restaurant
 
-  @Column('enum', { enum: MenuStatus })
+  @Column('enum', { enum: MenuStatus, default: MenuStatus.ACTIVE })
   status: MenuStatus
 
   @OneToMany(() => Product, (product) => product.menu)
