@@ -57,8 +57,8 @@ export class RestaurantsController {
   @ApiHeader({ name: 'x-refresh-token' })
   @ApiHeader({ name: 'x-id-token' })
   @ApiOperation({ summary: 'Obtener todos los miembros del staff de un restaurante' })
-  async findAllStaff(@Query('id') restaurantId: string) {
-    return await this.restaurantsService.findAllStaff(restaurantId)
+  async findAllStaff(@Query('id') id: string) {
+    return await this.restaurantsService.findAllStaff(id)
   }
 
   // Métodos de actualización

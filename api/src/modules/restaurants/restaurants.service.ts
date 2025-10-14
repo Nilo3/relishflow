@@ -267,10 +267,10 @@ export class RestaurantsService {
     }
   }
 
-  async findAllStaff(restaurantId: string) {
-    this.logger.log(`Finding all staff for restaurant: ${restaurantId}`)
+  async findAllStaff(id: string) {
+    this.logger.log(`Finding all staff for restaurant: ${id}`)
 
-    const staffMembers = await this.staffRepository.find({ where: { restaurant: { id: restaurantId } }, relations: ['restaurant'] })
+    const staffMembers = await this.staffRepository.find({ where: { restaurant: { id } }, relations: ['restaurant'] })
 
     if (staffMembers.length === 0) {
       return {
@@ -283,7 +283,7 @@ export class RestaurantsService {
     }
 
     // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
-    this.logger.log(`Found ${staffMembers.length} staff members for restaurant: ${restaurantId}`)
+    this.logger.log(`Found ${staffMembers.length} staff members for restaurant: ${id}`)
 
     return {
       success: true,
