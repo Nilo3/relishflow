@@ -197,8 +197,20 @@ export class RestaurantsService {
   async createStaff(userId: string, body: CreateStaffRequestDto) {
     this.logger.log(`Creating staff for restaurant: ${userId}`)
 
-    // First, check if staff already exists in our database by email
-    const existingStaff = await this.staffRepository.findOne({ where: { email: body.email } })
+    // First, check if staff already exists in our database by email and restaurant
+    const existingStaff = await this.staffRepository.findOne({ where: { email: body.email, restaurant: { id: body.restaurantId } }, relations: ['restaurant'] })
+
+    const restaurant = await this.restaurantRepository.findOne({ where: { id: body.restaurantId, user: { id: userId } }, relations: ['user'] })
+
+    if (!restaurant) {
+      return {
+        success: false,
+        code: RestaurantCodes.RESTAURANT_NOT_FOUND,
+        message: RestaurantMessages[RestaurantCodes.RESTAURANT_NOT_FOUND].en,
+        httpCode: HttpStatus.NOT_FOUND,
+        data: null
+      }
+    }
 
     if (existingStaff) {
       this.logger.warn(`Staff with email ${body.email} already exists in database`)
@@ -228,18 +240,6 @@ export class RestaurantsService {
         code: RestaurantCodes.ERROR_CREATING_STAFF,
         message: cognitoResult.message || 'Error creating user in Cognito',
         httpCode: HttpStatus.BAD_REQUEST,
-        data: null
-      }
-    }
-
-    const restaurant = await this.restaurantRepository.findOne({ where: { id: body.restaurantId, user: { id: userId } }, relations: ['user'] })
-
-    if (!restaurant) {
-      return {
-        success: false,
-        code: RestaurantCodes.RESTAURANT_NOT_FOUND,
-        message: RestaurantMessages[RestaurantCodes.RESTAURANT_NOT_FOUND].en,
-        httpCode: HttpStatus.NOT_FOUND,
         data: null
       }
     }
@@ -292,5 +292,11 @@ export class RestaurantsService {
       httpCode: HttpStatus.OK,
       data: staffMembers
     }
+  }
+
+  async findStaffByIdCognito(cognitoId: string) {
+    const staff = await this.staffRepository.findOne({ where: { cognitoId } })
+
+    return staff
   }
 }

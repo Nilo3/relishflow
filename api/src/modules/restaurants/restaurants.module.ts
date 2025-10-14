@@ -14,6 +14,7 @@ import { RestaurantSchedule } from './entities/restaurant-schedule.entity'
 @Module({
   imports: [TypeOrmModule.forFeature([Restaurant, RestaurantTable, RestaurantStaffMember, RestaurantSchedule]), S3Module, CognitoModule],
   controllers: [RestaurantsController],
-  providers: [RestaurantsService]
+  providers: [RestaurantsService],
+  exports: [RestaurantsService]
 })
 export class RestaurantsModule {}
