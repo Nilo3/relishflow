@@ -9,6 +9,7 @@ import { Roles } from 'src/decorators/roles.decorator'
 import { RestaurantsService } from './restaurants.service'
 import { CreateRestaurantRequestDto } from './dtos/create-restaurant-request.dto'
 import { UpdateRestaurantRequestDto } from './dtos/update-restaurant-request.dto'
+import { CreateStaffRequestDto } from './dtos/create-staff-request.dto'
 
 @ApiTags('Restaurants')
 @Controller('restaurants')
@@ -29,6 +30,16 @@ export class RestaurantsController {
     return await this.restaurantsService.createRestaurant(userId, body, file)
   }
 
+  @Post('create-staff')
+  @ApiBearerAuth()
+  @Roles(UserRoles.SuperAdmin, UserRoles.Tenant)
+  @ApiHeader({ name: 'x-refresh-token' })
+  @ApiHeader({ name: 'x-id-token' })
+  @ApiOperation({ summary: 'Crear un miembro del staff para un restaurante' })
+  async createStaff(@UserId() userId: string, @Body() body: CreateStaffRequestDto) {
+    return await this.restaurantsService.createStaff(userId, body)
+  }
+
   // Métodos de obtención
   @Get('find-all')
   @ApiBearerAuth()
@@ -38,6 +49,16 @@ export class RestaurantsController {
   @ApiOperation({ summary: 'Obtener todos los restaurantes de un usuario' })
   async findAllRestaurants(@UserId() userId: string) {
     return await this.restaurantsService.findAll(userId)
+  }
+
+  @Get('find-all-staff/:id')
+  @ApiBearerAuth()
+  @Roles(UserRoles.SuperAdmin, UserRoles.Tenant)
+  @ApiHeader({ name: 'x-refresh-token' })
+  @ApiHeader({ name: 'x-id-token' })
+  @ApiOperation({ summary: 'Obtener todos los miembros del staff de un restaurante' })
+  async findAllStaff(@Query('id') restaurantId: string) {
+    return await this.restaurantsService.findAllStaff(restaurantId)
   }
 
   // Métodos de actualización
