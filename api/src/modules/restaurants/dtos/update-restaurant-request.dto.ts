@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger'
-import { IsBoolean, IsOptional, IsString } from 'class-validator'
+import { IsBoolean, IsEnum, IsOptional, IsString } from 'class-validator'
 import { IUpdateRestaurantRequestDto } from '@shared/modules/restaurants/interfaces/update-restaurant-request.inteface'
 import { RestaurantStatus } from '@shared/modules/restaurants/enums/restaurant.status.enum'
 
@@ -37,5 +37,16 @@ export class UpdateRestaurantRequestDto implements IUpdateRestaurantRequestDto {
     required: false,
     enum: RestaurantStatus
   })
+  @IsOptional()
+  @IsEnum(RestaurantStatus)
   status?: RestaurantStatus
+
+  @ApiProperty({
+    description: 'Logo image of the restaurant',
+    required: false,
+    type: 'string',
+    format: 'binary'
+  })
+  @IsOptional()
+  file?: unknown
 }

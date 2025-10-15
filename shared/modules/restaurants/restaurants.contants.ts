@@ -13,7 +13,12 @@ export enum RestaurantCodes {
   ERROR_UPDATING_RESTAURANT = 'ERROR_UPDATING_RESTAURANT',
   ERROR_DELETING_RESTAURANT = 'ERROR_DELETING_RESTAURANT',
   ERROR_FINDING_RESTAURANT = 'ERROR_FINDING_RESTAURANT',
-  ERROR_FINDING_RESTAURANTS = 'ERROR_FINDING_RESTAURANTS'
+  ERROR_FINDING_RESTAURANTS = 'ERROR_FINDING_RESTAURANTS',
+  STAFF_CREATED = 'STAFF_CREATED',
+  STAFFS_FOUND = 'STAFFS_FOUND',
+  STAFFS_NOT_FOUND = 'STAFFS_NOT_FOUND',
+  STAFF_ALREADY_EXISTS = 'STAFF_ALREADY_EXISTS',
+  ERROR_CREATING_STAFF = 'ERROR_CREATING_STAFF'
 }
 
 export const RestaurantMessages: Record<RestaurantCodes, Record<string, string>> = {
@@ -76,5 +81,25 @@ export const RestaurantMessages: Record<RestaurantCodes, Record<string, string>>
   [RestaurantCodes.ERROR_FINDING_RESTAURANTS]: {
     en: 'Error finding restaurants',
     es: 'Error al buscar los restaurantes'
+  },
+  [RestaurantCodes.STAFF_CREATED]: {
+    en: 'Staff member created successfully',
+    es: 'Miembro del personal creado exitosamente'
+  },
+  [RestaurantCodes.STAFFS_FOUND]: {
+    en: 'Staff members found',
+    es: 'Miembros del personal encontrados'
+  },
+  [RestaurantCodes.STAFFS_NOT_FOUND]: {
+    en: 'No staff members found for this restaurant',
+    es: 'No se encontraron miembros del personal para este restaurante'
+  },
+  [RestaurantCodes.STAFF_ALREADY_EXISTS]: {
+    en: 'A staff member with this email already exists',
+    es: 'Ya existe un miembro del personal con este correo electrónico'
+  },
+  [RestaurantCodes.ERROR_CREATING_STAFF]: {
+    en: 'Error creating staff member',
+    es: 'Error al crear el miembro del personal'
   }
 }
