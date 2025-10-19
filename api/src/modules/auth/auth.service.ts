@@ -8,10 +8,11 @@ import type {
   GlobalSignOutCommandInput,
   InitiateAuthCommandInput,
   ResendConfirmationCodeCommandInput,
-  SignUpCommandInput,
   VerifyUserAttributeCommandInput
 } from '@aws-sdk/client-cognito-identity-provider'
 import type { Response } from 'express'
+
+import { createHmac } from 'crypto'
 
 import {
   CognitoIdentityProviderClient,
@@ -24,34 +25,11 @@ import {
   ForgotPasswordCommand,
   GetUserCommand,
   GlobalSignOutCommand,
-  InitiateAuthCommand,
-  SignUpCommand
+  InitiateAuthCommand
 } from '@aws-sdk/client-cognito-identity-provider'
 import { HttpStatus, Injectable, Logger } from '@nestjs/common'
 import { decode } from 'jsonwebtoken'
-
 import { ResponseDto } from '@shared/helpers/response.helper'
-import { UsersService } from '../users/users.service'
-import { CreateUserRequestDto } from '../users/dtos/create-user.dto'
-
-import AuthConfig from '../../configs/cognito.config'
-
-import { removeCookie, setCookie } from './helpers/cookies.helper'
-import { translateAWSError } from './helpers/translate-errors.helper'
-import { createHmac } from 'crypto'
-
-// Import standardized DTOs
-import { SignInRequestDto } from './dtos/sign-in-request.dto'
-import { SignUpRequestDto } from './dtos/sign-up-request.dto'
-import { ConfirmSignUpRequestDto } from './dtos/confirm-sign-up.dto'
-import { ForgotPasswordRequestDto } from './dtos/forgot-password.dto'
-import { ResetPasswordRequestDto } from './dtos/reset-password.dto'
-import { ChangePasswordRequestDto } from './dtos/change-password.dto'
-import { ChangeEmailRequestDto } from './dtos/change-email.dto'
-import { ConfirmChangeEmailRequestDto } from './dtos/confirm-change-email.dto'
-import { ResendCodeRequestDto } from './dtos/resend-code-sign-up.dto'
-import { ValidatePasswordRequestDto } from './dtos/validate-password.dto'
-
 // Import interfaces
 import { ISignInResponse } from '@shared/modules/auth/interfaces/sign-in-response.interface'
 import { ISignUpResponse } from '@shared/modules/auth/interfaces/sign-up-response.interface'
@@ -64,14 +42,30 @@ import { IChangeEmailResponse } from '@shared/modules/auth/interfaces/change-ema
 import { IConfirmChangeEmailResponse } from '@shared/modules/auth/interfaces/confirm-change-email-response.interface'
 import { IResendCodeResponse } from '@shared/modules/auth/interfaces/resend-code-response.interface'
 import { IValidatePasswordResponse } from '@shared/modules/auth/interfaces/validate-password-response.interface'
-import { IRefreshTokenResponse } from './interfaces/refresh-token-response.interface'
-import { IValidateTokenResponse } from './interfaces/validate-token-response.interface'
-
 // Import constants
 import { AuthCodes, AuthMessages } from '@shared/modules/auth/auth.constants'
 import { UserRoles } from '@shared/modules/users/enums/roles.enum'
-import { CognitoService } from '../cognito/cognito.service'
 import { UserCodes } from '@shared/modules/users/users.constants'
+
+import { CognitoService } from '../cognito/cognito.service'
+import { UsersService } from '../users/users.service'
+import { CreateUserRequestDto } from '../users/dtos/create-user.dto'
+import AuthConfig from '../../configs/cognito.config'
+
+import { removeCookie, setCookie } from './helpers/cookies.helper'
+import { translateAWSError } from './helpers/translate-errors.helper'
+import { SignInRequestDto } from './dtos/sign-in-request.dto'
+import { SignUpRequestDto } from './dtos/sign-up-request.dto'
+import { ConfirmSignUpRequestDto } from './dtos/confirm-sign-up.dto'
+import { ForgotPasswordRequestDto } from './dtos/forgot-password.dto'
+import { ResetPasswordRequestDto } from './dtos/reset-password.dto'
+import { ChangePasswordRequestDto } from './dtos/change-password.dto'
+import { ChangeEmailRequestDto } from './dtos/change-email.dto'
+import { ConfirmChangeEmailRequestDto } from './dtos/confirm-change-email.dto'
+import { ResendCodeRequestDto } from './dtos/resend-code-sign-up.dto'
+import { ValidatePasswordRequestDto } from './dtos/validate-password.dto'
+import { IRefreshTokenResponse } from './interfaces/refresh-token-response.interface'
+import { IValidateTokenResponse } from './interfaces/validate-token-response.interface'
 
 @Injectable()
 export class AuthService {
@@ -92,6 +86,7 @@ export class AuthService {
 
       if (existingUserByEmail) {
         this.logger.warn(`User with email ${credentials.email} already exists in database`)
+
         return {
           success: false,
           code: AuthCodes.USER_ALREADY_EXISTS,
@@ -111,6 +106,7 @@ export class AuthService {
 
       if (!cognitoResult.success) {
         this.logger.error(`Error creating user in Cognito: ${cognitoResult.message}`)
+
         return {
           success: false,
           code: UserCodes.ERROR_CREATING_USER,
@@ -124,17 +120,33 @@ export class AuthService {
       const createUserDto: CreateUserRequestDto = {
         email: credentials.email,
         name: credentials.firstNames,
-        surname: credentials.lastNames,
+        lastName: credentials.lastNames,
+        phone: credentials.phone,
         role: UserRoles.Tenant, // Default role
         password: credentials.password,
-        cognitoId: cognitoResult.data?.cognitoId || ''
+        cognitoId: cognitoResult.data?.cognitoId ?? '',
+        documentNumber: ''
       }
 
       const createUserResponse = await this.usersService.create(createUserDto)
 
       if (!createUserResponse.success) {
         this.logger.error('Error creating user in database', createUserResponse)
-        throw new Error('Failed to create user in database')
+
+        // Rollback in Cognito to avoid orphaned accounts
+        try {
+          await this.cognitoService.deleteUser(credentials.email)
+        } catch (rollbackError) {
+          this.logger.error('Failed to rollback Cognito user after DB failure', rollbackError as unknown)
+        }
+
+        return {
+          success: false,
+          code: AuthCodes.ERROR_SIGN_UP,
+          message: AuthMessages[AuthCodes.ERROR_SIGN_UP].en,
+          httpCode: HttpStatus.INTERNAL_SERVER_ERROR,
+          data: null
+        }
       }
 
       // Return the standardized response
@@ -144,7 +156,7 @@ export class AuthService {
         message: AuthMessages[AuthCodes.SIGN_UP_SUCCESS].en,
         httpCode: HttpStatus.CREATED,
         data: {
-          id: cognitoResult.data?.cognitoId || '',
+          id: cognitoResult.data?.cognitoId ?? '',
           email: credentials.email,
           firstNames: credentials.firstNames,
           lastNames: credentials.lastNames
@@ -153,7 +165,15 @@ export class AuthService {
     } catch (error) {
       this.logger.error('Error signing up user', error)
 
+      // Attempt rollback in Cognito to avoid orphaned accounts
+      try {
+        await this.cognitoService.deleteUser(credentials.email)
+      } catch (rollbackError) {
+        this.logger.error('Failed to rollback Cognito user after unexpected error', rollbackError as unknown)
+      }
+
       // Handle specific Cognito errors for better UX
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       if (error.name === 'UsernameExistsException') {
         return {
           success: false,
@@ -178,7 +198,7 @@ export class AuthService {
 
   async signIn(credentials: SignInRequestDto, response: Response): Promise<ResponseDto<ISignInResponse>> {
     try {
-      const secretHash = createHmac('sha256', process.env.USER_POOL_WEB_CLIENT_SECRET as string)
+      const secretHash = createHmac('sha256', process.env.USER_POOL_WEB_CLIENT_SECRET!)
         .update(credentials.email + process.env.USER_POOL_WEB_CLIENT_ID)
         .digest('base64')
 

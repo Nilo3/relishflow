@@ -1,23 +1,23 @@
 import { Body, Controller, Delete, Get, Param, Post, Put } from '@nestjs/common'
 import { ApiBearerAuth, ApiHeader, ApiOperation, ApiTags } from '@nestjs/swagger'
+import { ResponseDto } from '@shared/helpers/response.helper'
+import { UserRoles } from '@shared/modules/users/enums/roles.enum'
+import { IGetUserResponse } from '@shared/modules/users/interfaces/get-user-response.interface'
+import { USERS_BASE_PATH, USERS_PATHS } from '@shared/modules/users/users.endpoints'
+import { ICreateUserResponse } from '@shared/modules/users/interfaces/create-user-response.interface'
+import { IUpdateUserResponse } from '@shared/modules/users/interfaces/update-user-response.interface'
 
 import { UserId } from 'src/decorators/user-id.decorator'
 import { Roles } from 'src/decorators/roles.decorator'
-import { ResponseDto } from '@shared/helpers/response.helper'
 
-import { UserRoles } from '@shared/modules/users/enums/roles.enum'
 import { UsersService } from './users.service'
-import { USERS_BASE_PATH, USERS_PATHS } from '@shared/modules/users/users.endpoints'
-import { IGetUserResponse } from '@shared/modules/users/interfaces/get-user-response.interface'
 import { CreateUserRequestDto } from './dtos/create-user.dto'
 import { UpdateUserRequestDto } from './dtos/update-user.dto'
-import { ICreateUserResponse } from '@shared/modules/users/interfaces/create-user-response.interface'
-import { IUpdateUserResponse } from '@shared/modules/users/interfaces/update-user-response.interface'
 
 @ApiTags('Users')
 @Controller(USERS_BASE_PATH)
 export class UsersController {
-  constructor(private readonly usersService: UsersService) { }
+  constructor(private readonly usersService: UsersService) {}
 
   @Post()
   @ApiBearerAuth()
