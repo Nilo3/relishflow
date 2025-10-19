@@ -225,7 +225,7 @@ export class RestaurantsService {
     }
 
     // Crear usuario en Cognito primero
-    const cognitoResult = await this.cognitoService.createUser({
+    const cognitoResult = await this.cognitoService.createStaffUser({
       email: body.email,
       password: body.password,
       firstNames: body.name,
@@ -234,6 +234,13 @@ export class RestaurantsService {
 
     if (!cognitoResult.success || !cognitoResult.data) {
       this.logger.error(`Error creating user in Cognito: ${cognitoResult.message}`)
+
+      // Rollback in Cognito to avoid orphaned accounts
+      try {
+        await this.cognitoService.deleteUser(body.email)
+      } catch (rollbackError) {
+        this.logger.error('Failed to rollback Cognito user after DB failure', rollbackError as unknown)
+      }
 
       return {
         success: false,

@@ -1,26 +1,8 @@
 import { ApiBearerAuth, ApiHeader, ApiOperation, ApiTags } from '@nestjs/swagger'
 import { Body, Controller, Post, Res } from '@nestjs/common'
 import { Response } from 'express'
-
-import { Public } from 'src/decorators/public.decorator'
-import { Roles } from 'src/decorators/roles.decorator'
-import { AccessToken } from 'src/decorators/access-token.decorator'
-import { UserId } from 'src/decorators/user-id.decorator'
 import { ResponseDto } from '@shared/helpers/response.helper'
-
 import { UserRoles } from '@shared/modules/users/enums/roles.enum'
-
-import { ResendCodeRequestDto } from './dtos/resend-code-sign-up.dto'
-import { AuthService } from './auth.service'
-import { ConfirmSignUpRequestDto } from './dtos/confirm-sign-up.dto'
-import { ForgotPasswordRequestDto } from './dtos/forgot-password.dto'
-import { ResetPasswordRequestDto } from './dtos/reset-password.dto'
-import { ChangeEmailRequestDto } from './dtos/change-email.dto'
-import { ChangePasswordRequestDto } from './dtos/change-password.dto'
-import { ConfirmChangeEmailRequestDto } from './dtos/confirm-change-email.dto'
-import { ValidatePasswordRequestDto } from './dtos/validate-password.dto'
-import { SignInRequestDto } from './dtos/sign-in-request.dto'
-import { SignUpRequestDto } from './dtos/sign-up-request.dto'
 import { ISignInResponse } from '@shared/modules/auth/interfaces/sign-in-response.interface'
 import { ISignUpResponse } from '@shared/modules/auth/interfaces/sign-up-response.interface'
 import { IConfirmSignUpResponse } from '@shared/modules/auth/interfaces/confirm-sign-up-response.interface'
@@ -33,13 +15,29 @@ import { IConfirmChangeEmailResponse } from '@shared/modules/auth/interfaces/con
 import { IResendCodeResponse } from '@shared/modules/auth/interfaces/resend-code-response.interface'
 import { IValidatePasswordResponse } from '@shared/modules/auth/interfaces/validate-password-response.interface'
 import { AUTH_BASE_PATH, AUTH_PATHS } from '@shared/modules/auth/auth.endpoints'
+import { RestaurantStaffMemberRole } from '@shared/modules/restaurants/enums/restaurant-staff-member-roles.enum'
+
+import { Public } from 'src/decorators/public.decorator'
+import { Roles } from 'src/decorators/roles.decorator'
+import { AccessToken } from 'src/decorators/access-token.decorator'
+import { UserId } from 'src/decorators/user-id.decorator'
+
+import { ResendCodeRequestDto } from './dtos/resend-code-sign-up.dto'
+import { AuthService } from './auth.service'
+import { ConfirmSignUpRequestDto } from './dtos/confirm-sign-up.dto'
+import { ForgotPasswordRequestDto } from './dtos/forgot-password.dto'
+import { ResetPasswordRequestDto } from './dtos/reset-password.dto'
+import { ChangeEmailRequestDto } from './dtos/change-email.dto'
+import { ChangePasswordRequestDto } from './dtos/change-password.dto'
+import { ConfirmChangeEmailRequestDto } from './dtos/confirm-change-email.dto'
+import { ValidatePasswordRequestDto } from './dtos/validate-password.dto'
+import { SignInRequestDto } from './dtos/sign-in-request.dto'
+import { SignUpRequestDto } from './dtos/sign-up-request.dto'
 
 @ApiTags('Auth')
 @Controller(AUTH_BASE_PATH)
 export class AuthController {
-  constructor(
-    private authService: AuthService
-  ) { }
+  constructor(private readonly authService: AuthService) {}
 
   @ApiOperation({ summary: 'User sign in' })
   @Public()
@@ -77,7 +75,7 @@ export class AuthController {
   }
 
   @ApiOperation({ summary: 'Sign out the user' })
-  @Roles(UserRoles.SuperAdmin, UserRoles.Tenant)
+  @Roles(UserRoles.SuperAdmin, UserRoles.Tenant, RestaurantStaffMemberRole.CASHIER, RestaurantStaffMemberRole.COOK, RestaurantStaffMemberRole.WAITER, RestaurantStaffMemberRole.OTHER)
   @ApiBearerAuth()
   @ApiHeader({ name: 'x-refresh-token' })
   @ApiHeader({ name: 'x-id-token' })
