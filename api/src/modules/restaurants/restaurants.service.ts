@@ -4,6 +4,7 @@ import { Repository } from 'typeorm'
 import { RestaurantCodes, RestaurantMessages } from '@shared/modules/restaurants/restaurants.contants'
 import { RestaurantStatus } from '@shared/modules/restaurants/enums/restaurant.status.enum'
 import { IFindAllRestaurantsResponse } from '@shared/modules/restaurants/interfaces/find-all-restaurants-response.interface'
+import { IFindAllStaffResponse } from '@shared/modules/restaurants/interfaces/find-all-staff-response.interface'
 
 import { User } from 'src/modules/users/entities/user.entity'
 
@@ -292,12 +293,21 @@ export class RestaurantsService {
     // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
     this.logger.log(`Found ${staffMembers.length} staff members for restaurant: ${id}`)
 
+    const response: IFindAllStaffResponse[] = staffMembers.map((staff) => ({
+      id: staff.id,
+      name: staff.name,
+      lastName: staff.lastName,
+      email: staff.email,
+      role: staff.role,
+      isActive: staff.isActive
+    }))
+
     return {
       success: true,
       code: RestaurantCodes.STAFFS_FOUND,
       message: RestaurantMessages[RestaurantCodes.STAFFS_FOUND].en,
       httpCode: HttpStatus.OK,
-      data: staffMembers
+      data: response
     }
   }
 
