@@ -4,6 +4,7 @@ import { Repository } from 'typeorm'
 import { RestaurantCodes, RestaurantMessages } from '@shared/modules/restaurants/restaurants.contants'
 import { RestaurantStatus } from '@shared/modules/restaurants/enums/restaurant.status.enum'
 import { IFindAllRestaurantsResponse } from '@shared/modules/restaurants/interfaces/find-all-restaurants-response.interface'
+import { IFindAllStaffResponse } from '@shared/modules/restaurants/interfaces/find-all-staff-response.interface'
 
 import { User } from 'src/modules/users/entities/user.entity'
 
@@ -225,7 +226,7 @@ export class RestaurantsService {
     }
 
     // Crear usuario en Cognito primero
-    const cognitoResult = await this.cognitoService.createUser({
+    const cognitoResult = await this.cognitoService.createStaffUser({
       email: body.email,
       password: body.password,
       firstNames: body.name,
@@ -234,6 +235,13 @@ export class RestaurantsService {
 
     if (!cognitoResult.success || !cognitoResult.data) {
       this.logger.error(`Error creating user in Cognito: ${cognitoResult.message}`)
+
+      // Rollback in Cognito to avoid orphaned accounts
+      try {
+        await this.cognitoService.deleteUser(body.email)
+      } catch (rollbackError) {
+        this.logger.error('Failed to rollback Cognito user after DB failure', rollbackError as unknown)
+      }
 
       return {
         success: false,
@@ -285,12 +293,21 @@ export class RestaurantsService {
     // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
     this.logger.log(`Found ${staffMembers.length} staff members for restaurant: ${id}`)
 
+    const response: IFindAllStaffResponse[] = staffMembers.map((staff) => ({
+      id: staff.id,
+      name: staff.name,
+      lastName: staff.lastName,
+      email: staff.email,
+      role: staff.role,
+      isActive: staff.isActive
+    }))
+
     return {
       success: true,
       code: RestaurantCodes.STAFFS_FOUND,
       message: RestaurantMessages[RestaurantCodes.STAFFS_FOUND].en,
       httpCode: HttpStatus.OK,
-      data: staffMembers
+      data: response
     }
   }
 

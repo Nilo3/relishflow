@@ -1,13 +1,11 @@
-import { Injectable, Logger, HttpStatus } from '@nestjs/common'
 import { createHmac } from 'crypto'
-import {
-  CognitoIdentityProviderClient,
-  SignUpCommand,
-  SignUpCommandInput
-} from '@aws-sdk/client-cognito-identity-provider'
-import AuthConfig from '../../configs/cognito.config'
+
+import { Injectable, Logger, HttpStatus } from '@nestjs/common'
+import { CognitoIdentityProviderClient, SignUpCommand, SignUpCommandInput, AdminConfirmSignUpCommand } from '@aws-sdk/client-cognito-identity-provider'
 import { ResponseDto } from '@shared/helpers/response.helper'
 import { AuthCodes, AuthMessages } from '@shared/modules/auth/auth.constants'
+
+import AuthConfig from '../../configs/cognito.config'
 
 @Injectable()
 export class CognitoService {
@@ -21,21 +19,16 @@ export class CognitoService {
   /**
    * Crea un usuario en Cognito
    */
-  async createUser(userData: {
-    email: string
-    password: string
-    firstNames: string
-    lastNames: string
-  }): Promise<ResponseDto<{ cognitoId: string }>> {
+  async createUser(userData: { email: string; password: string; firstNames: string; lastNames: string }): Promise<ResponseDto<{ cognitoId: string }>> {
     try {
       this.logger.debug(`Creando usuario en Cognito: ${userData.email}`)
 
-      const secretHash = createHmac('sha256', process.env.USER_POOL_WEB_CLIENT_SECRET as string)
+      const secretHash = createHmac('sha256', process.env.USER_POOL_WEB_CLIENT_SECRET!)
         .update(userData.email + process.env.USER_POOL_WEB_CLIENT_ID)
         .digest('base64')
 
       const params: SignUpCommandInput = {
-        ClientId: process.env.USER_POOL_WEB_CLIENT_ID as string,
+        ClientId: process.env.USER_POOL_WEB_CLIENT_ID!,
         Username: userData.email,
         Password: userData.password,
         SecretHash: secretHash,
@@ -150,4 +143,86 @@ export class CognitoService {
     }
   }
 
+  /**
+   * Crea un usuario del staff en Cognito con el email automáticamente confirmado
+   */
+  async createStaffUser(userData: { email: string; password: string; firstNames: string; lastNames: string }): Promise<ResponseDto<{ cognitoId: string }>> {
+    try {
+      this.logger.debug(`Creando usuario del staff en Cognito: ${userData.email}`)
+
+      const secretHash = createHmac('sha256', process.env.USER_POOL_WEB_CLIENT_SECRET!)
+        .update(userData.email + process.env.USER_POOL_WEB_CLIENT_ID!)
+        .digest('base64')
+
+      const params: SignUpCommandInput = {
+        ClientId: process.env.USER_POOL_WEB_CLIENT_ID!,
+        Username: userData.email,
+        Password: userData.password,
+        SecretHash: secretHash,
+        UserAttributes: [
+          {
+            Name: 'email',
+            Value: userData.email
+          },
+          {
+            Name: 'given_name',
+            Value: userData.firstNames
+          },
+          {
+            Name: 'family_name',
+            Value: userData.lastNames
+          }
+        ]
+      }
+
+      const response = await this.auth.send(new SignUpCommand(params))
+
+      // Confirmar automáticamente el email del usuario
+      const confirmParams = {
+        UserPoolId: process.env.USER_POOL_ID!,
+        Username: userData.email
+      }
+
+      await this.auth.send(new AdminConfirmSignUpCommand(confirmParams))
+
+      this.logger.debug(`Usuario del staff creado y confirmado exitosamente en Cognito: ${userData.email}`)
+
+      return {
+        success: true,
+        code: AuthCodes.SIGN_UP_SUCCESS,
+        message: AuthMessages[AuthCodes.SIGN_UP_SUCCESS].es,
+        httpCode: HttpStatus.CREATED,
+        data: {
+          cognitoId: response.UserSub ?? ''
+        }
+      }
+    } catch (error: any) {
+      this.logger.error(`Error creando usuario del staff en Cognito: ${userData.email}`, error)
+
+      let authCode: AuthCodes
+      let httpCode: HttpStatus
+
+      if (error.name === 'UsernameExistsException') {
+        authCode = AuthCodes.USER_ALREADY_EXISTS
+        httpCode = HttpStatus.CONFLICT
+      } else if (error.name === 'InvalidPasswordException') {
+        authCode = AuthCodes.INVALID_PASSWORD
+        httpCode = HttpStatus.BAD_REQUEST
+      } else if (error.name === 'InvalidParameterException') {
+        authCode = AuthCodes.INVALID_PARAMETERS
+        httpCode = HttpStatus.BAD_REQUEST
+      } else {
+        authCode = AuthCodes.ERROR_SIGN_UP
+        httpCode = HttpStatus.INTERNAL_SERVER_ERROR
+      }
+
+      return {
+        success: false,
+        code: authCode,
+        message: AuthMessages[authCode].es,
+        httpCode: httpCode,
+        data: null
+      }
+    }
+  }
 }

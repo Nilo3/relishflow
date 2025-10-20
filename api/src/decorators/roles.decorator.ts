@@ -6,4 +6,4 @@ import { SetMetadata } from '@nestjs/common'
 export const ROLES_KEY = 'roles'
 
 // Decorador para establecer los roles permitidos para ejecutar la petición
-export const Roles = (...roles: UserRoles[] | RestaurantStaffMemberRole[]) => SetMetadata(ROLES_KEY, roles)
+export const Roles = (...roles: (UserRoles | RestaurantStaffMemberRole)[]) => SetMetadata(ROLES_KEY, roles)

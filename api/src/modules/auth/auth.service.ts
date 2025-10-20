@@ -12,7 +12,7 @@ import type {
 } from '@aws-sdk/client-cognito-identity-provider'
 import type { Response } from 'express'
 
-import { createHmac } from 'crypto'
+import { createHmac } from 'node:crypto'
 
 import {
   CognitoIdentityProviderClient,
@@ -125,7 +125,7 @@ export class AuthService {
         role: UserRoles.Tenant, // Default role
         password: credentials.password,
         cognitoId: cognitoResult.data?.cognitoId ?? '',
-        documentNumber: ''
+        documentNumber: credentials.documentNumber
       }
 
       const createUserResponse = await this.usersService.create(createUserDto)
@@ -199,12 +199,13 @@ export class AuthService {
   async signIn(credentials: SignInRequestDto, response: Response): Promise<ResponseDto<ISignInResponse>> {
     try {
       const secretHash = createHmac('sha256', process.env.USER_POOL_WEB_CLIENT_SECRET!)
+        // eslint-disable-next-line @typescript-eslint/restrict-plus-operands
         .update(credentials.email + process.env.USER_POOL_WEB_CLIENT_ID)
         .digest('base64')
 
       const params: InitiateAuthCommandInput = {
         AuthFlow: 'USER_PASSWORD_AUTH',
-        ClientId: process.env.USER_POOL_WEB_CLIENT_ID as string,
+        ClientId: process.env.USER_POOL_WEB_CLIENT_ID!,
         AuthParameters: {
           USERNAME: credentials.email,
           PASSWORD: credentials.password,
@@ -252,8 +253,8 @@ export class AuthService {
             httpCode: HttpStatus.OK,
             data: {
               accessToken: accessToken || '',
-              refreshToken: refreshToken || '',
-              idToken: idToken || '',
+              refreshToken: refreshToken ?? '',
+              idToken: idToken ?? '',
               user
             }
           }
@@ -307,7 +308,8 @@ export class AuthService {
   }
 
   async confirmSignUp(body: ConfirmSignUpRequestDto): Promise<ResponseDto<IConfirmSignUpResponse>> {
-    const secretHash = createHmac('sha256', process.env.USER_POOL_WEB_CLIENT_SECRET as string)
+    const secretHash = createHmac('sha256', process.env.USER_POOL_WEB_CLIENT_SECRET!)
+      // eslint-disable-next-line @typescript-eslint/restrict-plus-operands
       .update(body.email + process.env.USER_POOL_WEB_CLIENT_ID)
       .digest('base64')
 
@@ -350,7 +352,8 @@ export class AuthService {
   }
 
   async resendCodeSignUp(body: ResendCodeRequestDto): Promise<ResponseDto<IResendCodeResponse>> {
-    const secretHash = createHmac('sha256', process.env.USER_POOL_WEB_CLIENT_SECRET as string)
+    const secretHash = createHmac('sha256', process.env.USER_POOL_WEB_CLIENT_SECRET!)
+      // eslint-disable-next-line @typescript-eslint/restrict-plus-operands
       .update(body.email + process.env.USER_POOL_WEB_CLIENT_ID)
       .digest('base64')
 
@@ -392,7 +395,8 @@ export class AuthService {
   }
 
   async forgotPassword(body: ForgotPasswordRequestDto): Promise<ResponseDto<IForgotPasswordResponse>> {
-    const secretHash = createHmac('sha256', process.env.USER_POOL_WEB_CLIENT_SECRET as string)
+    const secretHash = createHmac('sha256', process.env.USER_POOL_WEB_CLIENT_SECRET!)
+      // eslint-disable-next-line @typescript-eslint/restrict-plus-operands
       .update(body.email + process.env.USER_POOL_WEB_CLIENT_ID)
       .digest('base64')
 
@@ -443,7 +447,8 @@ export class AuthService {
   }
 
   async resetPassword(body: ResetPasswordRequestDto): Promise<ResponseDto<IResetPasswordResponse>> {
-    const secretHash = createHmac('sha256', process.env.USER_POOL_WEB_CLIENT_SECRET as string)
+    const secretHash = createHmac('sha256', process.env.USER_POOL_WEB_CLIENT_SECRET!)
+      // eslint-disable-next-line @typescript-eslint/restrict-plus-operands
       .update(body.email + process.env.USER_POOL_WEB_CLIENT_ID)
       .digest('base64')
 
@@ -538,13 +543,13 @@ export class AuthService {
   }
 
   async refreshToken(refreshToken: string, subId: string, response: Response): Promise<ResponseDto<IRefreshTokenResponse>> {
-    const clientSecret = process.env.USER_POOL_WEB_CLIENT_SECRET as string;
-    const clientId = process.env.USER_POOL_WEB_CLIENT_ID as string;
+    const clientSecret = process.env.USER_POOL_WEB_CLIENT_SECRET!
+    const clientId = process.env.USER_POOL_WEB_CLIENT_ID!
 
     // For refresh token flow, we need to generate the secret hash using the subId + client ID
     const secretHash = createHmac('sha256', clientSecret)
       .update(subId + clientId)
-      .digest('base64');
+      .digest('base64')
 
     const params: InitiateAuthCommandInput = {
       ClientId: clientId,
@@ -591,9 +596,9 @@ export class AuthService {
         message: AuthMessages[AuthCodes.SIGN_IN_SUCCESS].en,
         httpCode: HttpStatus.OK,
         data: {
-          accessToken: AuthenticationResult.AccessToken || '',
-          refreshToken: AuthenticationResult.RefreshToken || '',
-          idToken: AuthenticationResult.IdToken || ''
+          accessToken: AuthenticationResult.AccessToken ?? '',
+          refreshToken: AuthenticationResult.RefreshToken ?? '',
+          idToken: AuthenticationResult.IdToken ?? ''
         }
       }
     } catch (error: unknown) {
@@ -651,7 +656,8 @@ export class AuthService {
   async changeEmail(body: ChangeEmailRequestDto, userId?: string): Promise<ResponseDto<IChangeEmailResponse>> {
     // If a userId is provided, verify the user exists before changing the email
     if (userId) {
-      const userResult = await this.usersService.find(userId);
+      const userResult = await this.usersService.find(userId)
+
       if (!userResult.success) {
         return {
           success: false,
@@ -659,7 +665,7 @@ export class AuthService {
           message: userResult.message,
           httpCode: userResult.httpCode,
           data: null
-        };
+        }
       }
     }
 
@@ -725,7 +731,7 @@ export class AuthService {
 
       // Get the user ID from the access token
       const decodedToken = decode(accessToken) as { sub: string }
-      const userId = decodedToken?.sub
+      const userId = decodedToken.sub
 
       if (!userId) {
         return {
@@ -776,9 +782,11 @@ export class AuthService {
     try {
       await this.auth.send(command)
       this.logger.debug('Token de acceso válido.')
+
       return { isValid: true }
     } catch (error) {
       this.logger.error('Error al validar el token de acceso con Cognito.', error)
+
       return {
         isValid: false,
         error: {
@@ -790,8 +798,8 @@ export class AuthService {
   }
 
   async validatePassword(body: ValidatePasswordRequestDto): Promise<ResponseDto<IValidatePasswordResponse>> {
-    const clientSecret = process.env.USER_POOL_WEB_CLIENT_SECRET as string;
-    const clientId = process.env.USER_POOL_WEB_CLIENT_ID as string;
+    const clientSecret = process.env.USER_POOL_WEB_CLIENT_SECRET!
+    const clientId = process.env.USER_POOL_WEB_CLIENT_ID!
 
     const secretHash = createHmac('sha256', clientSecret)
       .update(body.email + clientId)
@@ -838,16 +846,15 @@ export class AuthService {
     }
   }
 
-  decodeAccessToken(token: string): { [key: string]: any } | null {
+  decodeAccessToken(token: string): Record<string, any> | null {
     this.logger.debug('Decodificando token de acceso...')
 
     try {
-      return decode(token) as { [key: string]: any }
+      return decode(token) as Record<string, any>
     } catch (error) {
       this.logger.error('Error al decodificar el token de acceso.', error)
+
       return null
     }
   }
-
-
 }
