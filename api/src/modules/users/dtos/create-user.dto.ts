@@ -28,6 +28,20 @@ export class CreateUserRequestDto implements ICreateUserRequest {
   @ApiProperty({
     example: '1234567890'
   })
+  @IsString({ message: 'Document type must be a string' })
+  @IsNotEmpty({ message: 'Document type is required' })
+  documentTypeId: string
+
+  @ApiProperty({
+    example: '1234567890'
+  })
+  @IsString({ message: 'City must be a string' })
+  @IsNotEmpty({ message: 'City is required' })
+  cityId: string
+
+  @ApiProperty({
+    example: '1234567890'
+  })
   @IsString({ message: 'Document number must be a string' })
   @IsNotEmpty({ message: 'Document number is required' })
   documentNumber: string

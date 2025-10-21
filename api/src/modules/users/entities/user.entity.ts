@@ -1,8 +1,7 @@
-import { Column, CreateDateColumn, Entity, ManyToOne, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm'
-
+import { Column, CreateDateColumn, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm'
 import { UserRoles } from '@shared/modules/users/enums/roles.enum'
 import { UserModel } from '@shared/modules/users/models/user.model'
-import { Country } from 'src/modules/commons/entities/country.entity'
+
 import { City } from 'src/modules/commons/entities/city.entity'
 import { DocumentType } from 'src/modules/commons/entities/document-type.entity'
 import { Restaurant } from 'src/modules/restaurants/entities/restaurant.entity'
@@ -23,15 +22,14 @@ export class User implements UserModel {
   email: string
 
   @ManyToOne(() => DocumentType, (documentType) => documentType.users)
+  @JoinColumn({ name: 'documentTypeId' })
   documentType: DocumentType
 
   @Column('varchar')
   documentNumber: string
 
-  @ManyToOne(() => Country, (country) => country.users)
-  country: Country
-
   @ManyToOne(() => City, (city) => city.users)
+  @JoinColumn({ name: 'cityId' })
   city: City
 
   @Column('enum', { enum: UserRoles })

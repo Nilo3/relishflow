@@ -42,7 +42,16 @@ export class UsersService {
       this.logger.log(`Creating user ${createUserDto.name} ${createUserDto.lastName} - ${createUserDto.role}...`)
 
       // Create new user
-      const user = this.usersRepository.create(createUserDto)
+      const user = this.usersRepository.create({
+        ...createUserDto,
+        documentType: {
+          id: createUserDto.documentTypeId
+        },
+        city: {
+          id: createUserDto.cityId
+        }
+      })
+
       const savedUser = await this.usersRepository.save(user)
 
       // Map entity to response
@@ -51,6 +60,8 @@ export class UsersService {
         name: savedUser.name,
         lastName: savedUser.lastName,
         email: savedUser.email,
+        documentTypeId: savedUser.documentType.id,
+        cityId: savedUser.city.id,
         documentNumber: savedUser.documentNumber,
         phone: savedUser.phone,
         role: savedUser.role,
@@ -68,7 +79,7 @@ export class UsersService {
         data: userResponse
       }
     } catch (error) {
-      this.logger.error(`Error creating user: ${error.message}`, error.stack)
+      this.logger.error(`Error creating user: ${error instanceof Error ? error.message : 'Unknown error'}`, error instanceof Error ? error.stack : undefined)
 
       return {
         success: false,
@@ -279,6 +290,7 @@ export class UsersService {
 
       if (!cognitoResult.success) {
         this.logger.error(`Error eliminando usuario de Cognito: ${cognitoResult.message}`)
+
         return {
           success: false,
           code: UserCodes.ERROR_DELETING_USER,
@@ -293,6 +305,7 @@ export class UsersService {
 
       if (!deleteFromDbResult.success) {
         this.logger.error('Error eliminando usuario de base de datos', deleteFromDbResult)
+
         return {
           success: false,
           code: UserCodes.ERROR_DELETING_USER,

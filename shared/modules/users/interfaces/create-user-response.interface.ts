@@ -6,6 +6,8 @@ export interface ICreateUserResponse {
     lastName: string;
     email: string;
     documentNumber: string;
+    documentTypeId: string;
+    cityId: string;
     phone: string;
     role: UserRoles;
     createdAt: Date;

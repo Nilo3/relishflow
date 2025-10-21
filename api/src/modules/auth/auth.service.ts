@@ -121,6 +121,8 @@ export class AuthService {
         email: credentials.email,
         name: credentials.firstNames,
         lastName: credentials.lastNames,
+        documentTypeId: credentials.documentTypeId,
+        cityId: credentials.cityId,
         phone: credentials.phone,
         role: UserRoles.Tenant, // Default role
         password: credentials.password,

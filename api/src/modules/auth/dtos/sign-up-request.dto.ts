@@ -11,6 +11,13 @@ export class SignUpRequestDto implements ISignUpRequest {
   firstNames: string
 
   @ApiProperty({
+    example: 'CC'
+  })
+  @IsNotEmpty({ message: 'Document type cannot be empty' })
+  @IsString({ message: 'Document type must be a string' })
+  documentTypeId: string
+
+  @ApiProperty({
     example: '1234567890'
   })
   @IsNotEmpty({ message: 'Document number cannot be empty' })
@@ -30,6 +37,13 @@ export class SignUpRequestDto implements ISignUpRequest {
   @IsNotEmpty({ message: 'Last names cannot be empty' })
   @IsString({ message: 'Last names must be a string' })
   lastNames: string
+
+  @ApiProperty({
+    example: '1234567890'
+  })
+  @IsNotEmpty({ message: 'City cannot be empty' })
+  @IsString({ message: 'City must be a string' })
+  cityId: string
 
   @ApiProperty({
     example: 'john.doe@example.com'

@@ -1,6 +1,5 @@
 import { Column, CreateDateColumn, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm'
 
-import { User } from 'src/modules/users/entities/user.entity'
 import { City } from 'src/modules/commons/entities/city.entity'
 import { DocumentType } from 'src/modules/commons/entities/document-type.entity'
 
@@ -26,9 +25,6 @@ export class Country {
     default: () => 'CURRENT_TIMESTAMP'
   })
   updatedAt: Date
-
-  @OneToMany(() => User, (user) => user.country)
-  users: User[]
 
   @OneToMany(() => City, (city: City): Country => city.country)
   cities: City[]
