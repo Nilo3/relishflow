@@ -5,6 +5,7 @@ import { RestaurantCodes, RestaurantMessages } from '@shared/modules/restaurants
 import { RestaurantStatus } from '@shared/modules/restaurants/enums/restaurant.status.enum'
 import { IFindAllRestaurantsResponse } from '@shared/modules/restaurants/interfaces/find-all-restaurants-response.interface'
 import { IFindAllStaffResponse } from '@shared/modules/restaurants/interfaces/find-all-staff-response.interface'
+import { IFindAllRestaurantsSchedule } from '@shared/modules/restaurants/interfaces/find-all-restaurants-schedule.interface'
 
 import { User } from 'src/modules/users/entities/user.entity'
 
@@ -403,6 +404,40 @@ export class RestaurantsService {
       message: RestaurantMessages[RestaurantCodes.SCHEDULE_CREATED].en,
       httpCode: HttpStatus.CREATED,
       data: schedule
+    }
+  }
+
+  async findAllSchedules(userId: string, restaurantId: string) {
+    this.logger.log(`Finding all schedules for restaurant: ${restaurantId}`)
+
+    const schedules = await this.restaurantScheduleRepository.find({ where: { restaurant: { id: restaurantId, user: { id: userId } } }, relations: ['restaurant'] })
+
+    if (schedules.length === 0) {
+      return {
+        success: false,
+        code: RestaurantCodes.SCHEDULES_NOT_FOUND,
+        message: RestaurantMessages[RestaurantCodes.SCHEDULES_NOT_FOUND].en,
+        httpCode: HttpStatus.NOT_FOUND,
+        data: []
+      }
+    }
+
+    // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
+    this.logger.log(`Found ${schedules.length} schedules for restaurant: ${restaurantId}`)
+
+    const data: IFindAllRestaurantsSchedule[] = schedules.map((schedule) => ({
+      id: schedule.id,
+      dayOfWeek: schedule.dayOfWeek,
+      openTime: schedule.openTime,
+      closeTime: schedule.closeTime
+    }))
+
+    return {
+      success: true,
+      code: RestaurantCodes.SCHEDULES_FOUND,
+      message: RestaurantMessages[RestaurantCodes.SCHEDULES_FOUND].en,
+      httpCode: HttpStatus.OK,
+      data: data
     }
   }
 }

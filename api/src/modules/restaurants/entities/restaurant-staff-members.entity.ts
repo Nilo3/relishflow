@@ -1,4 +1,4 @@
-import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm'
+import { Column, CreateDateColumn, Entity, ManyToOne, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm'
 import { RestaurantStaffMemberRole } from '@shared/modules/restaurants/enums/restaurant-staff-member-roles.enum'
 
 import { Restaurant } from './restaurant.entity'
@@ -25,6 +25,18 @@ export class RestaurantStaffMember {
 
   @Column('boolean', { default: true })
   isActive: boolean
+
+  @CreateDateColumn({
+    type: 'timestamp without time zone',
+    default: () => 'CURRENT_TIMESTAMP'
+  })
+  createdAt: Date
+
+  @UpdateDateColumn({
+    type: 'timestamp without time zone',
+    default: () => 'CURRENT_TIMESTAMP'
+  })
+  updatedAt: Date
 
   @ManyToOne(() => Restaurant, (restaurant) => restaurant.staffMembers)
   restaurant: Restaurant

@@ -72,6 +72,16 @@ export class RestaurantsController {
     return await this.restaurantsService.findAllStaff(id)
   }
 
+  @Get('find-all-schedules/:id')
+  @ApiBearerAuth()
+  @Roles(UserRoles.SuperAdmin, UserRoles.Tenant)
+  @ApiHeader({ name: 'x-refresh-token' })
+  @ApiHeader({ name: 'x-id-token' })
+  @ApiOperation({ summary: 'Obtener todos los horarios de un restaurante' })
+  async findAllSchedules(@UserId() userId: string, @Query('id') id: string) {
+    return await this.restaurantsService.findAllSchedules(userId, id)
+  }
+
   // Métodos de actualización
   @Patch('update/:id')
   @ApiBearerAuth()

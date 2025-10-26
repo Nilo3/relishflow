@@ -1,4 +1,4 @@
-import { Column, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm'
+import { Column, CreateDateColumn, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm'
 import { RestaurantStatus } from '@shared/modules/restaurants/enums/restaurant.status.enum'
 
 import { User } from 'src/modules/users/entities/user.entity'
@@ -28,6 +28,18 @@ export class Restaurant {
 
   @Column('varchar', { nullable: true })
   logoUrl: string
+
+  @CreateDateColumn({
+    type: 'timestamp without time zone',
+    default: () => 'CURRENT_TIMESTAMP'
+  })
+  createdAt: Date
+
+  @UpdateDateColumn({
+    type: 'timestamp without time zone',
+    default: () => 'CURRENT_TIMESTAMP'
+  })
+  updatedAt: Date
 
   @ManyToOne(() => User, (user) => user.restaurants)
   @JoinColumn({ name: 'userId' })

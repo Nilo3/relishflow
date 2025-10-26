@@ -2,6 +2,8 @@ export enum RestaurantCodes {
   RESTAURANT_CREATED = 'RESTAURANT_CREATED',
   RESTAURANT_CREATED_WITHOUT_LOGO = 'RESTAURANT_CREATED_WITHOUT_LOGO',
   SCHEDULE_CREATED = 'SCHEDULE_CREATED',
+  SCHEDULES_FOUND = 'SCHEDULES_FOUND',
+  SCHEDULES_NOT_FOUND = 'SCHEDULES_NOT_FOUND',
   INVALID_SCHEDULE_FORMAT = 'INVALID_SCHEDULE_FORMAT',
   SCHEDULE_OVERLAP = 'SCHEDULE_OVERLAP',
   SCHEDULE_ALREADY_EXISTS = 'SCHEDULE_ALREADY_EXISTS',
@@ -49,6 +51,14 @@ export const RestaurantMessages: Record<RestaurantCodes, Record<string, string>>
   [RestaurantCodes.SCHEDULE_CREATED]: {
     en: 'Schedule created successfully',
     es: 'Horario creado exitosamente'
+  },
+  [RestaurantCodes.SCHEDULES_FOUND]: {
+    en: 'Schedules found for this restaurant',
+    es: 'Horarios encontrados para este restaurante'
+  },
+  [RestaurantCodes.SCHEDULES_NOT_FOUND]: {
+    en: 'No schedules found for this restaurant',
+    es: 'No se encontraron horarios para este restaurante'
   },
   [RestaurantCodes.RESTAURANT_UPDATED]: {
     en: 'Restaurant updated successfully',

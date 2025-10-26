@@ -1,4 +1,4 @@
-import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm'
+import { Column, CreateDateColumn, Entity, ManyToOne, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm'
 import { DaysSchedule } from '@shared/modules/restaurants/enums/days-schedule.enum'
 
 import { Restaurant } from './restaurant.entity'
@@ -19,4 +19,16 @@ export class RestaurantSchedule {
 
   @Column('time')
   closeTime: string
+
+  @CreateDateColumn({
+    type: 'timestamp without time zone',
+    default: () => 'CURRENT_TIMESTAMP'
+  })
+  createdAt: Date
+
+  @UpdateDateColumn({
+    type: 'timestamp without time zone',
+    default: () => 'CURRENT_TIMESTAMP'
+  })
+  updatedAt: Date
 }
