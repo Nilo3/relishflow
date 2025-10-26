@@ -1,4 +1,4 @@
-import { Post, Body, UseInterceptors, Controller, UploadedFile, Get, Query, Patch } from '@nestjs/common'
+import { Post, Body, UseInterceptors, Controller, UploadedFile, Get, Query, Patch, Delete } from '@nestjs/common'
 import { FileInterceptor } from '@nestjs/platform-express'
 import { ApiOperation, ApiBody, ApiConsumes, ApiTags, ApiBearerAuth, ApiHeader } from '@nestjs/swagger'
 import { UserRoles } from '@shared/modules/users/enums/roles.enum'
@@ -97,4 +97,13 @@ export class RestaurantsController {
   }
 
   // Métodos de eliminación
+  @Delete('delete-restaurant-schedule/:id')
+  @ApiBearerAuth()
+  @Roles(UserRoles.SuperAdmin, UserRoles.Tenant)
+  @ApiHeader({ name: 'x-refresh-token' })
+  @ApiHeader({ name: 'x-id-token' })
+  @ApiOperation({ summary: 'Eliminar un horario de un restaurante' })
+  async deleteRestaurantSchedule(@Query('id') id: string) {
+    return await this.restaurantsService.deleteSchedule(id)
+  }
 }

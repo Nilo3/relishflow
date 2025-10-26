@@ -440,4 +440,32 @@ export class RestaurantsService {
       data: data
     }
   }
+
+  async deleteSchedule(scheduleId: string) {
+    this.logger.log(`Deleting schedule with ID: ${scheduleId}`)
+
+    const schedule = await this.restaurantScheduleRepository.findOne({ where: { id: scheduleId } })
+
+    if (!schedule) {
+      return {
+        success: false,
+        code: RestaurantCodes.SCHEDULES_NOT_FOUND,
+        message: RestaurantMessages[RestaurantCodes.SCHEDULES_NOT_FOUND].en,
+        httpCode: HttpStatus.NOT_FOUND,
+        data: null
+      }
+    }
+
+    await this.restaurantScheduleRepository.remove(schedule)
+
+    this.logger.log('Schedule deleted')
+
+    return {
+      success: true,
+      code: RestaurantCodes.SCHEDULES_FOUND,
+      message: 'Schedule deleted successfully',
+      httpCode: HttpStatus.OK,
+      data: null
+    }
+  }
 }
