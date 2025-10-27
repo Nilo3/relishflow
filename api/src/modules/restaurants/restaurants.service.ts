@@ -5,6 +5,7 @@ import { RestaurantCodes, RestaurantMessages } from '@shared/modules/restaurants
 import { RestaurantStatus } from '@shared/modules/restaurants/enums/restaurant.status.enum'
 import { IFindAllRestaurantsResponse } from '@shared/modules/restaurants/interfaces/find-all-restaurants-response.interface'
 import { IFindAllStaffResponse } from '@shared/modules/restaurants/interfaces/find-all-staff-response.interface'
+import { IFindAllRestaurantsSchedule } from '@shared/modules/restaurants/interfaces/find-all-restaurants-schedule.interface'
 
 import { User } from 'src/modules/users/entities/user.entity'
 
@@ -16,6 +17,9 @@ import { CreateRestaurantRequestDto } from './dtos/create-restaurant-request.dto
 import { UpdateRestaurantRequestDto } from './dtos/update-restaurant-request.dto'
 import { RestaurantStaffMember } from './entities/restaurant-staff-members.entity'
 import { CreateStaffRequestDto } from './dtos/create-staff-request.dto'
+import { RestaurantSchedule } from './entities/restaurant-schedule.entity'
+import { CreateRestaurantScheduleDto } from './dtos/create-restaurant-schedule.dto'
+import { ScheduleHelpers } from './helpers/schedule.helpers'
 
 @Injectable()
 export class RestaurantsService {
@@ -25,6 +29,8 @@ export class RestaurantsService {
   private readonly restaurantRepository: Repository<Restaurant>
   @InjectRepository(RestaurantStaffMember)
   private readonly staffRepository: Repository<RestaurantStaffMember>
+  @InjectRepository(RestaurantSchedule)
+  private readonly restaurantScheduleRepository: Repository<RestaurantSchedule>
 
   constructor(
     private readonly s3Service: S3Service,
@@ -315,5 +321,151 @@ export class RestaurantsService {
     const staff = await this.staffRepository.findOne({ where: { cognitoId } })
 
     return staff
+  }
+
+  // Métodos para los horarios
+  async createSchedule(restaurantId: string, body: CreateRestaurantScheduleDto) {
+    this.logger.log(`Creating schedule for restaurant ${restaurantId}`)
+
+    // Validar el formato de las horas
+    if (!ScheduleHelpers.isValidTimeFormat(body.openTime) || !ScheduleHelpers.isValidTimeFormat(body.closeTime)) {
+      return {
+        success: false,
+        code: RestaurantCodes.INVALID_SCHEDULE_FORMAT,
+        message: RestaurantMessages[RestaurantCodes.INVALID_SCHEDULE_FORMAT].en,
+        httpCode: HttpStatus.BAD_REQUEST,
+        data: null
+      }
+    }
+
+    const restaurant = await this.restaurantRepository.findOne({
+      where: { id: restaurantId },
+      relations: ['schedules']
+    })
+
+    if (!restaurant) {
+      return {
+        success: false,
+        code: RestaurantCodes.RESTAURANT_NOT_FOUND,
+        message: RestaurantMessages[RestaurantCodes.RESTAURANT_NOT_FOUND].en,
+        httpCode: HttpStatus.NOT_FOUND,
+        data: null
+      }
+    }
+
+    // Verificar si ya existe un horario para ese día
+    const existingSchedules = restaurant.schedules.filter((schedule) => schedule.dayOfWeek === body.dayOfWeek)
+
+    // Verificar solapamientos
+    const hasOverlap = existingSchedules.some((existingSchedule) =>
+      ScheduleHelpers.hasTimeOverlap({ openTime: body.openTime, closeTime: body.closeTime }, { openTime: existingSchedule.openTime, closeTime: existingSchedule.closeTime })
+    )
+
+    if (hasOverlap) {
+      return {
+        success: false,
+        code: RestaurantCodes.SCHEDULE_OVERLAP,
+        message: RestaurantMessages[RestaurantCodes.SCHEDULE_OVERLAP].en,
+        httpCode: HttpStatus.CONFLICT,
+        data: null
+      }
+    }
+
+    // Verificar duplicados exactos
+    const hasDuplicate = existingSchedules.some((existingSchedule) =>
+      ScheduleHelpers.areSchedulesEqual(
+        { dayOfWeek: body.dayOfWeek, openTime: body.openTime, closeTime: body.closeTime },
+        { dayOfWeek: existingSchedule.dayOfWeek, openTime: existingSchedule.openTime, closeTime: existingSchedule.closeTime }
+      )
+    )
+
+    if (hasDuplicate) {
+      return {
+        success: false,
+        code: RestaurantCodes.SCHEDULE_ALREADY_EXISTS,
+        message: RestaurantMessages[RestaurantCodes.SCHEDULE_ALREADY_EXISTS].en,
+        httpCode: HttpStatus.CONFLICT,
+        data: null
+      }
+    }
+
+    const schedule = this.restaurantScheduleRepository.create({
+      restaurant,
+      dayOfWeek: body.dayOfWeek,
+      openTime: body.openTime,
+      closeTime: body.closeTime
+    })
+
+    await this.restaurantScheduleRepository.save(schedule)
+
+    return {
+      success: true,
+      code: RestaurantCodes.SCHEDULE_CREATED,
+      message: RestaurantMessages[RestaurantCodes.SCHEDULE_CREATED].en,
+      httpCode: HttpStatus.CREATED,
+      data: schedule
+    }
+  }
+
+  async findAllSchedules(userId: string, restaurantId: string) {
+    this.logger.log(`Finding all schedules for restaurant: ${restaurantId}`)
+
+    const schedules = await this.restaurantScheduleRepository.find({ where: { restaurant: { id: restaurantId, user: { id: userId } } }, relations: ['restaurant'] })
+
+    if (schedules.length === 0) {
+      return {
+        success: false,
+        code: RestaurantCodes.SCHEDULES_NOT_FOUND,
+        message: RestaurantMessages[RestaurantCodes.SCHEDULES_NOT_FOUND].en,
+        httpCode: HttpStatus.NOT_FOUND,
+        data: []
+      }
+    }
+
+    // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
+    this.logger.log(`Found ${schedules.length} schedules for restaurant: ${restaurantId}`)
+
+    const data: IFindAllRestaurantsSchedule[] = schedules.map((schedule) => ({
+      id: schedule.id,
+      dayOfWeek: schedule.dayOfWeek,
+      openTime: schedule.openTime,
+      closeTime: schedule.closeTime
+    }))
+
+    return {
+      success: true,
+      code: RestaurantCodes.SCHEDULES_FOUND,
+      message: RestaurantMessages[RestaurantCodes.SCHEDULES_FOUND].en,
+      httpCode: HttpStatus.OK,
+      data: data
+    }
+  }
+
+  async deleteSchedule(scheduleId: string) {
+    this.logger.log(`Deleting schedule with ID: ${scheduleId}`)
+
+    const schedule = await this.restaurantScheduleRepository.findOne({ where: { id: scheduleId } })
+
+    if (!schedule) {
+      return {
+        success: false,
+        code: RestaurantCodes.SCHEDULES_NOT_FOUND,
+        message: RestaurantMessages[RestaurantCodes.SCHEDULES_NOT_FOUND].en,
+        httpCode: HttpStatus.NOT_FOUND,
+        data: null
+      }
+    }
+
+    await this.restaurantScheduleRepository.remove(schedule)
+
+    this.logger.log('Schedule deleted')
+
+    return {
+      success: true,
+      code: RestaurantCodes.SCHEDULES_FOUND,
+      message: 'Schedule deleted successfully',
+      httpCode: HttpStatus.OK,
+      data: null
+    }
   }
 }

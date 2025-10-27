@@ -1,6 +1,12 @@
 export enum RestaurantCodes {
   RESTAURANT_CREATED = 'RESTAURANT_CREATED',
   RESTAURANT_CREATED_WITHOUT_LOGO = 'RESTAURANT_CREATED_WITHOUT_LOGO',
+  SCHEDULE_CREATED = 'SCHEDULE_CREATED',
+  SCHEDULES_FOUND = 'SCHEDULES_FOUND',
+  SCHEDULES_NOT_FOUND = 'SCHEDULES_NOT_FOUND',
+  INVALID_SCHEDULE_FORMAT = 'INVALID_SCHEDULE_FORMAT',
+  SCHEDULE_OVERLAP = 'SCHEDULE_OVERLAP',
+  SCHEDULE_ALREADY_EXISTS = 'SCHEDULE_ALREADY_EXISTS',
   RESTAURANT_UPDATED = 'RESTAURANT_UPDATED',
   RESTAURANT_UPDATED_WITHOUT_LOGO = 'RESTAURANT_UPDATED_WITHOUT_LOGO',
   RESTAURANT_DELETED = 'RESTAURANT_DELETED',
@@ -29,6 +35,30 @@ export const RestaurantMessages: Record<RestaurantCodes, Record<string, string>>
   [RestaurantCodes.RESTAURANT_CREATED_WITHOUT_LOGO]: {
     en: 'Restaurant created successfully but logo upload failed',
     es: 'Restaurante creado exitosamente pero falló la subida del logo'
+  },
+  [RestaurantCodes.INVALID_SCHEDULE_FORMAT]: {
+    en: 'Invalid schedule time format. Use HH:mm format (00:00-23:59)',
+    es: 'Formato de hora inválido. Use el formato HH:mm (00:00-23:59)'
+  },
+  [RestaurantCodes.SCHEDULE_OVERLAP]: {
+    en: 'Schedule overlaps with an existing schedule for this day',
+    es: 'El horario se solapa con un horario existente para este día'
+  },
+  [RestaurantCodes.SCHEDULE_ALREADY_EXISTS]: {
+    en: 'This schedule already exists for this day',
+    es: 'Este horario ya existe para este día'
+  },
+  [RestaurantCodes.SCHEDULE_CREATED]: {
+    en: 'Schedule created successfully',
+    es: 'Horario creado exitosamente'
+  },
+  [RestaurantCodes.SCHEDULES_FOUND]: {
+    en: 'Schedules found for this restaurant',
+    es: 'Horarios encontrados para este restaurante'
+  },
+  [RestaurantCodes.SCHEDULES_NOT_FOUND]: {
+    en: 'No schedules found for this restaurant',
+    es: 'No se encontraron horarios para este restaurante'
   },
   [RestaurantCodes.RESTAURANT_UPDATED]: {
     en: 'Restaurant updated successfully',

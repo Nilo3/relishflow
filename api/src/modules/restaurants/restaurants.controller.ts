@@ -1,4 +1,4 @@
-import { Post, Body, UseInterceptors, Controller, UploadedFile, Get, Query, Patch } from '@nestjs/common'
+import { Post, Body, UseInterceptors, Controller, UploadedFile, Get, Query, Patch, Delete } from '@nestjs/common'
 import { FileInterceptor } from '@nestjs/platform-express'
 import { ApiOperation, ApiBody, ApiConsumes, ApiTags, ApiBearerAuth, ApiHeader } from '@nestjs/swagger'
 import { UserRoles } from '@shared/modules/users/enums/roles.enum'
@@ -10,6 +10,7 @@ import { RestaurantsService } from './restaurants.service'
 import { CreateRestaurantRequestDto } from './dtos/create-restaurant-request.dto'
 import { UpdateRestaurantRequestDto } from './dtos/update-restaurant-request.dto'
 import { CreateStaffRequestDto } from './dtos/create-staff-request.dto'
+import { CreateRestaurantScheduleDto } from './dtos/create-restaurant-schedule.dto'
 
 @ApiTags('Restaurants')
 @Controller('restaurants')
@@ -40,6 +41,16 @@ export class RestaurantsController {
     return await this.restaurantsService.createStaff(userId, body)
   }
 
+  @Post('create-schedule/:id')
+  @ApiBearerAuth()
+  @Roles(UserRoles.SuperAdmin, UserRoles.Tenant)
+  @ApiHeader({ name: 'x-refresh-token' })
+  @ApiHeader({ name: 'x-id-token' })
+  @ApiOperation({ summary: 'Crear un horario para un restaurante' })
+  async createSchedule(@Query('id') id: string, @Body() body: CreateRestaurantScheduleDto) {
+    return await this.restaurantsService.createSchedule(id, body)
+  }
+
   // Métodos de obtención
   @Get('find-all')
   @ApiBearerAuth()
@@ -61,6 +72,16 @@ export class RestaurantsController {
     return await this.restaurantsService.findAllStaff(id)
   }
 
+  @Get('find-all-schedules/:id')
+  @ApiBearerAuth()
+  @Roles(UserRoles.SuperAdmin, UserRoles.Tenant)
+  @ApiHeader({ name: 'x-refresh-token' })
+  @ApiHeader({ name: 'x-id-token' })
+  @ApiOperation({ summary: 'Obtener todos los horarios de un restaurante' })
+  async findAllSchedules(@UserId() userId: string, @Query('id') id: string) {
+    return await this.restaurantsService.findAllSchedules(userId, id)
+  }
+
   // Métodos de actualización
   @Patch('update/:id')
   @ApiBearerAuth()
@@ -76,4 +97,13 @@ export class RestaurantsController {
   }
 
   // Métodos de eliminación
+  @Delete('delete-restaurant-schedule/:id')
+  @ApiBearerAuth()
+  @Roles(UserRoles.SuperAdmin, UserRoles.Tenant)
+  @ApiHeader({ name: 'x-refresh-token' })
+  @ApiHeader({ name: 'x-id-token' })
+  @ApiOperation({ summary: 'Eliminar un horario de un restaurante' })
+  async deleteRestaurantSchedule(@Query('id') id: string) {
+    return await this.restaurantsService.deleteSchedule(id)
+  }
 }

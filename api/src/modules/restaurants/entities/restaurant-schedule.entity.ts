@@ -1,4 +1,6 @@
-import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm'
+import { Column, CreateDateColumn, Entity, ManyToOne, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm'
+import { DaysSchedule } from '@shared/modules/restaurants/enums/days-schedule.enum'
+
 import { Restaurant } from './restaurant.entity'
 
 @Entity('restaurant_schedules')
@@ -9,12 +11,24 @@ export class RestaurantSchedule {
   @ManyToOne(() => Restaurant, (restaurant) => restaurant.schedules)
   restaurant: Restaurant
 
-  @Column('varchar')
-  dayOfWeek: number
+  @Column('enum', { enum: DaysSchedule })
+  dayOfWeek: DaysSchedule
 
   @Column('time')
   openTime: string
 
   @Column('time')
   closeTime: string
+
+  @CreateDateColumn({
+    type: 'timestamp without time zone',
+    default: () => 'CURRENT_TIMESTAMP'
+  })
+  createdAt: Date
+
+  @UpdateDateColumn({
+    type: 'timestamp without time zone',
+    default: () => 'CURRENT_TIMESTAMP'
+  })
+  updatedAt: Date
 }
