@@ -4,8 +4,8 @@ import { IsBoolean, IsNumber, IsOptional, IsString } from 'class-validator'
 
 export class CreateRestaurantTableRequestDto implements ICreateRestaurantTableRequest {
   @ApiProperty({
-    example: 'Pasta Palace',
-    description: 'The name of the restaurant',
+    example: 1,
+    description: 'The number of the restaurant table',
     required: false
   })
   @IsOptional()

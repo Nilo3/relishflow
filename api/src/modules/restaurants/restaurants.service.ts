@@ -516,7 +516,7 @@ export class RestaurantsService {
    * @returns Buffer con la imagen PNG del código QR
    */
   private async createTableQrCode(restaurantId: string, tableNumber: number): Promise<Buffer> {
-    const qrData = `table-${restaurantId}-${tableNumber.toString()}`
+    const qrData = `${process.env.FRONTEND_URL ?? 'http://localhost:4000/'}${restaurantId}/${tableNumber.toString()}`
     const qrCodeImage = await QRCodeLib.toBuffer(qrData, {
       errorCorrectionLevel: 'H',
       type: 'png',
