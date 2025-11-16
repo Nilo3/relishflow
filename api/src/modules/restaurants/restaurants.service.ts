@@ -7,6 +7,7 @@ import { RestaurantStatus } from '@shared/modules/restaurants/enums/restaurant.s
 import { IFindAllRestaurantsResponse } from '@shared/modules/restaurants/interfaces/find-all-restaurants-response.interface'
 import { IFindAllStaffResponse } from '@shared/modules/restaurants/interfaces/find-all-staff-response.interface'
 import { IFindAllRestaurantsSchedule } from '@shared/modules/restaurants/interfaces/find-all-restaurants-schedule.interface'
+import { IFindAllRestaurantsTables } from '@shared/modules/restaurants/interfaces/find-all-restaurants-tables-response.interface'
 
 import { User } from 'src/modules/users/entities/user.entity'
 
@@ -205,8 +206,29 @@ export class RestaurantsService {
     }
   }
 
-  private async findRestaurantByIdAndUser(restaurantId: string, userId: string) {
-    const restaurant = await this.restaurantRepository.findOne({ where: { id: restaurantId, user: { id: userId } }, relations: ['user'] })
+  /**
+   * Obtener un restaurante por ID y usuario.
+   * @param restaurantId - ID del restaurante
+   * @param userId - ID del usuario
+   * @param relations - Relaciones a incluir en la consulta
+   * @returns Restaurante encontrado o error si no existe
+   */
+  private async findRestaurantByIdAndUser(restaurantId: string, userId: string, relations?: string[]) {
+    // Definir relaciones por defecto si no se provee un arreglo
+    const defaultRelations = ['user', 'staffMembers', 'tables', 'menus', 'products', 'schedules']
+
+    // Aseguramos que 'user' siempre esté presente en el arreglo de relaciones,
+    // incluso si el llamador pasa su propio arreglo de relaciones.
+    let queryRelations: string[]
+
+    if (relations) {
+      // Unir las relaciones solicitadas con 'user' y eliminar duplicados
+      queryRelations = Array.from(new Set([...relations, 'user']))
+    } else {
+      queryRelations = defaultRelations
+    }
+
+    const restaurant = await this.restaurantRepository.findOne({ where: { id: restaurantId, user: { id: userId } }, relations: queryRelations })
 
     if (!restaurant) {
       return {
@@ -557,7 +579,7 @@ export class RestaurantsService {
 
     this.logger.log(`Creating table for restaurant ${restaurantId}`)
 
-    const restaurantResult = await this.findRestaurantByIdAndUser(restaurantId, userId)
+    const restaurantResult = await this.findRestaurantByIdAndUser(restaurantId, userId, ['tables'])
 
     if (!restaurantResult.success || !restaurantResult.data) {
       return restaurantResult
@@ -598,6 +620,48 @@ export class RestaurantsService {
       message: RestaurantMessages[RestaurantCodes.RESTAURANT_TABLE_CREATED].en,
       httpCode: HttpStatus.CREATED,
       data: table
+    }
+  }
+
+  async findAllTables(restaurantId: string, userId: string) {
+    this.logger.log(`Finding all tables for restaurant: ${restaurantId}`)
+
+    const restaurantResult = await this.findRestaurantByIdAndUser(restaurantId, userId, ['tables'])
+
+    if (!restaurantResult.success || !restaurantResult.data) {
+      return restaurantResult
+    }
+
+    const tables = await this.tableRepository.find({ where: { restaurant: { id: restaurantId } }, relations: ['restaurant'] })
+
+    if (tables.length === 0) {
+      return {
+        success: false,
+        code: RestaurantCodes.RESTAURANT_TABLES_NOT_FOUND,
+        message: RestaurantMessages[RestaurantCodes.RESTAURANT_TABLES_NOT_FOUND].en,
+        httpCode: HttpStatus.NOT_FOUND,
+        data: []
+      }
+    }
+
+    // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
+    this.logger.log(`Found ${tables.length} tables for restaurant: ${restaurantId}`)
+
+    const mappedTables: IFindAllRestaurantsTables[] = tables.map((table) => ({
+      id: table.id,
+      tableNumber: table.tableNumber,
+      seatingCapacity: table.seatingCapacity,
+      isAvailable: table.isAvailable,
+      location: table.location,
+      qrCode: table.qrCode
+    }))
+
+    return {
+      success: true,
+      code: RestaurantCodes.RESTAURANT_TABLES_FOUND,
+      message: RestaurantMessages[RestaurantCodes.RESTAURANT_TABLES_FOUND].en,
+      httpCode: HttpStatus.OK,
+      data: mappedTables
     }
   }
 }

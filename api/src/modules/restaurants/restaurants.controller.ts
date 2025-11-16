@@ -93,6 +93,16 @@ export class RestaurantsController {
     return await this.restaurantsService.findAllSchedules(userId, id)
   }
 
+  @Get('find-all-tables/:id')
+  @ApiBearerAuth()
+  @Roles(UserRoles.SuperAdmin, UserRoles.Tenant)
+  @ApiHeader({ name: 'x-refresh-token' })
+  @ApiHeader({ name: 'x-id-token' })
+  @ApiOperation({ summary: 'Obtener todas las mesas de un restaurante' })
+  async findAllTables(@Query('id') id: string, @UserId() userId: string) {
+    return await this.restaurantsService.findAllTables(id, userId)
+  }
+
   // Métodos de actualización
   @Patch('update/:id')
   @ApiBearerAuth()

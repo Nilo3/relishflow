@@ -27,7 +27,9 @@ export enum RestaurantCodes {
   STAFFS_FOUND = 'STAFFS_FOUND',
   STAFFS_NOT_FOUND = 'STAFFS_NOT_FOUND',
   STAFF_ALREADY_EXISTS = 'STAFF_ALREADY_EXISTS',
-  ERROR_CREATING_STAFF = 'ERROR_CREATING_STAFF'
+  ERROR_CREATING_STAFF = 'ERROR_CREATING_STAFF',
+  RESTAURANT_TABLES_NOT_FOUND = 'RESTAURANT_TABLES_NOT_FOUND',
+  RESTAURANT_TABLES_FOUND = 'RESTAURANT_TABLES_FOUND'
 }
 
 export const RestaurantMessages: Record<RestaurantCodes, Record<string, string>> = {
@@ -146,5 +148,13 @@ export const RestaurantMessages: Record<RestaurantCodes, Record<string, string>>
   [RestaurantCodes.ERROR_CREATING_STAFF]: {
     en: 'Error creating staff member',
     es: 'Error al crear el miembro del personal'
+  },
+  [RestaurantCodes.RESTAURANT_TABLES_NOT_FOUND]: {
+    en: 'No tables found for this restaurant',
+    es: 'No se encontraron mesas para este restaurante'
+  },
+  [RestaurantCodes.RESTAURANT_TABLES_FOUND]: {
+    en: 'Restaurant tables found',
+    es: 'Mesas del restaurante encontradas'
   }
 }
