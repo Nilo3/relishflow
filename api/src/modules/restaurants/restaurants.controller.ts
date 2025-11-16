@@ -11,6 +11,7 @@ import { CreateRestaurantRequestDto } from './dtos/create-restaurant-request.dto
 import { UpdateRestaurantRequestDto } from './dtos/update-restaurant-request.dto'
 import { CreateStaffRequestDto } from './dtos/create-staff-request.dto'
 import { CreateRestaurantScheduleDto } from './dtos/create-restaurant-schedule.dto'
+import { CreateRestaurantTableRequestDto } from './dtos/create-restaurant-table-request.dto'
 
 @ApiTags('Restaurants')
 @Controller('restaurants')
@@ -49,6 +50,16 @@ export class RestaurantsController {
   @ApiOperation({ summary: 'Crear un horario para un restaurante' })
   async createSchedule(@Query('id') id: string, @Body() body: CreateRestaurantScheduleDto) {
     return await this.restaurantsService.createSchedule(id, body)
+  }
+
+  @Post('create-table/:id')
+  @ApiBearerAuth()
+  @Roles(UserRoles.SuperAdmin, UserRoles.Tenant)
+  @ApiHeader({ name: 'x-refresh-token' })
+  @ApiHeader({ name: 'x-id-token' })
+  @ApiOperation({ summary: 'Crear una mesa para un restaurante' })
+  async createRestaurantTable(@Query('id') id: string, @UserId() userId: string, @Body() body: CreateRestaurantTableRequestDto) {
+    return await this.restaurantsService.createRestaurantTable(id, userId, body)
   }
 
   // Métodos de obtención
