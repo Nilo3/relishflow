@@ -2,6 +2,7 @@ export enum RestaurantCodes {
   RESTAURANT_CREATED = 'RESTAURANT_CREATED',
   RESTAURANT_CREATED_WITHOUT_LOGO = 'RESTAURANT_CREATED_WITHOUT_LOGO',
   RESTAURANT_TABLE_CREATED = 'RESTAURANT_TABLE_CREATED',
+  RESTAURANT_TABLE_CREATED_WITHOUT_QR = 'RESTAURANT_TABLE_CREATED_WITHOUT_QR',
   SCHEDULE_CREATED = 'SCHEDULE_CREATED',
   SCHEDULES_FOUND = 'SCHEDULES_FOUND',
   SCHEDULES_NOT_FOUND = 'SCHEDULES_NOT_FOUND',
@@ -21,6 +22,7 @@ export enum RestaurantCodes {
   ERROR_DELETING_RESTAURANT = 'ERROR_DELETING_RESTAURANT',
   ERROR_FINDING_RESTAURANT = 'ERROR_FINDING_RESTAURANT',
   ERROR_FINDING_RESTAURANTS = 'ERROR_FINDING_RESTAURANTS',
+  ERROR_CREATING_RESTAURANT_TABLE = 'ERROR_CREATING_RESTAURANT_TABLE',
   STAFF_CREATED = 'STAFF_CREATED',
   STAFFS_FOUND = 'STAFFS_FOUND',
   STAFFS_NOT_FOUND = 'STAFFS_NOT_FOUND',
@@ -40,6 +42,10 @@ export const RestaurantMessages: Record<RestaurantCodes, Record<string, string>>
   [RestaurantCodes.RESTAURANT_TABLE_CREATED]: {
     en: 'Restaurant table created successfully',
     es: 'Mesa del restaurante creada exitosamente'
+  },
+  [RestaurantCodes.RESTAURANT_TABLE_CREATED_WITHOUT_QR]: {
+    en: 'Restaurant table created successfully but QR code upload failed',
+    es: 'Mesa del restaurante creada exitosamente pero falló la subida del código QR'
   },
   [RestaurantCodes.INVALID_SCHEDULE_FORMAT]: {
     en: 'Invalid schedule time format. Use HH:mm format (00:00-23:59)',
@@ -116,6 +122,10 @@ export const RestaurantMessages: Record<RestaurantCodes, Record<string, string>>
   [RestaurantCodes.ERROR_FINDING_RESTAURANTS]: {
     en: 'Error finding restaurants',
     es: 'Error al buscar los restaurantes'
+  },
+  [RestaurantCodes.ERROR_CREATING_RESTAURANT_TABLE]: {
+    en: 'Error creating restaurant table',
+    es: 'Error al crear la mesa del restaurante'
   },
   [RestaurantCodes.STAFF_CREATED]: {
     en: 'Staff member created successfully',

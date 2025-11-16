@@ -1,6 +1,7 @@
 import { HttpStatus, Injectable, Logger } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
 import { Repository } from 'typeorm'
+import * as QRCodeLib from 'qrcode'
 import { RestaurantCodes, RestaurantMessages } from '@shared/modules/restaurants/restaurants.contants'
 import { RestaurantStatus } from '@shared/modules/restaurants/enums/restaurant.status.enum'
 import { IFindAllRestaurantsResponse } from '@shared/modules/restaurants/interfaces/find-all-restaurants-response.interface'
@@ -496,6 +497,61 @@ export class RestaurantsService {
   }
 
   // Métodos para las mesas
+
+  /**
+   * Cuenta el número de mesas existentes para un restaurante dado.
+   * @param restaurantId - ID del restaurante
+   * @returns Número de mesas existentes
+   */
+  private async countExistingTables(restaurantId: string): Promise<number> {
+    const count = await this.tableRepository.count({ where: { restaurant: { id: restaurantId } } })
+
+    return count
+  }
+
+  /**
+   * Crea el código QR para una mesa de restaurante.
+   * @param restaurantId - ID del restaurante
+   * @param tableNumber - Número de la mesa
+   * @returns Buffer con la imagen PNG del código QR
+   */
+  private async createTableQrCode(restaurantId: string, tableNumber: number): Promise<Buffer> {
+    const qrData = `table-${restaurantId}-${tableNumber.toString()}`
+    const qrCodeImage = await QRCodeLib.toBuffer(qrData, {
+      errorCorrectionLevel: 'H',
+      type: 'png',
+      margin: 1,
+      width: 300
+    })
+
+    return qrCodeImage
+  }
+
+  /**
+   *  Sube el código QR de una mesa a S3.
+   * @param restaurantId - ID del restaurante
+   * @param tableNumber - Número de la mesa
+   * @returns url del código QR en S3
+   */
+  private async uploadTableQrCode(restaurantId: string, tableNumber: number, qrCodeBuffer: Buffer) {
+    const qrPath = `restaurants/${restaurantId}/tables/${tableNumber.toString()}/qr`
+    const qrUploadResponse = await this.s3Service.upload(qrPath, qrCodeBuffer, 'image/png')
+
+    if (!qrUploadResponse.success || !qrUploadResponse.data) {
+      this.logger.error('Error uploading QR code to S3')
+
+      return {
+        success: false,
+        code: RestaurantCodes.ERROR_CREATING_RESTAURANT_TABLE,
+        message: RestaurantMessages[RestaurantCodes.ERROR_CREATING_RESTAURANT_TABLE].en,
+        httpCode: HttpStatus.BAD_REQUEST,
+        data: null
+      }
+    }
+
+    return qrUploadResponse
+  }
+
   async createRestaurantTable(restaurantId: string, userId: string, body: CreateRestaurantTableRequestDto) {
     const { tableNumber, seatingCapacity, isAvailable, location } = body
 
@@ -510,14 +566,25 @@ export class RestaurantsService {
     const restaurant = restaurantResult.data
 
     // Contar las mesas existentes para generar el número de mesa por defecto
-    const existingTablesCount = await this.tableRepository.count({ where: { restaurant: { id: restaurantId } } })
+    const existingTablesCount = await this.countExistingTables(restaurantId)
+    const finalTableNumber = tableNumber ?? existingTablesCount + 1
+
+    // Generar el código QR como imagen
+    const qrCodeBuffer = await this.createTableQrCode(restaurantId, finalTableNumber)
+
+    // Subir la imagen QR a S3
+    const qrUploadResponse = await this.uploadTableQrCode(restaurantId, finalTableNumber, qrCodeBuffer)
+
+    if (!qrUploadResponse.success || !qrUploadResponse.data) {
+      return qrUploadResponse
+    }
 
     const table = this.tableRepository.create({
-      tableNumber: tableNumber ?? existingTablesCount + 1,
+      tableNumber: finalTableNumber,
       seatingCapacity: seatingCapacity,
       isAvailable: isAvailable,
       location: location,
-      qrCode: `QR-${restaurantId}-${Date.now().toString()}`,
+      qrCode: qrUploadResponse.data,
       restaurant
     })
 
