@@ -10,23 +10,23 @@ export class RestaurantTable {
   @PrimaryGeneratedColumn('uuid')
   id: string
 
-  @ManyToOne(() => Restaurant, (restaurant) => restaurant.tables)
-  restaurant: Restaurant
-
-  @Column('varchar')
+  @Column('int')
   tableNumber: number
 
   @Column('varchar')
   qrCode: string
 
-  @Column('varchar')
+  @Column('int')
   seatingCapacity: number
 
-  @Column('varchar')
+  @Column('boolean')
   isAvailable: boolean
 
   @Column('varchar')
   location: string
+
+  @ManyToOne(() => Restaurant, (restaurant) => restaurant.tables)
+  restaurant: Restaurant
 
   @OneToMany(() => Order, (order) => order.table)
   orders: Order[]
