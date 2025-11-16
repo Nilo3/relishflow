@@ -8,6 +8,7 @@ import { IFindAllRestaurantsResponse } from '@shared/modules/restaurants/interfa
 import { IFindAllStaffResponse } from '@shared/modules/restaurants/interfaces/find-all-staff-response.interface'
 import { IFindAllRestaurantsSchedule } from '@shared/modules/restaurants/interfaces/find-all-restaurants-schedule.interface'
 import { IFindAllRestaurantsTables } from '@shared/modules/restaurants/interfaces/find-all-restaurants-tables-response.interface'
+import { IUpsertRestaurantsTableResponse } from '@shared/modules/restaurants/interfaces/upsert-restaurants-table-response.interface'
 
 import { User } from 'src/modules/users/entities/user.entity'
 
@@ -24,6 +25,7 @@ import { CreateRestaurantScheduleDto } from './dtos/create-restaurant-schedule.d
 import { ScheduleHelpers } from './helpers/schedule.helpers'
 import { CreateRestaurantTableRequestDto } from './dtos/create-restaurant-table-request.dto'
 import { RestaurantTable } from './entities/restaurant-tables.entity'
+import { UpdateRestaurantTableRequestDto } from './dtos/update-restaurant-table-request.dto'
 
 @Injectable()
 export class RestaurantsService {
@@ -614,12 +616,21 @@ export class RestaurantsService {
 
     this.logger.log('Restaurant table created')
 
+    const tableResponse: IUpsertRestaurantsTableResponse = {
+      id: table.id,
+      tableNumber: table.tableNumber,
+      seatingCapacity: table.seatingCapacity,
+      isAvailable: table.isAvailable,
+      location: table.location,
+      qrCode: table.qrCode
+    }
+
     return {
       success: true,
       code: RestaurantCodes.RESTAURANT_TABLE_CREATED,
       message: RestaurantMessages[RestaurantCodes.RESTAURANT_TABLE_CREATED].en,
       httpCode: HttpStatus.CREATED,
-      data: table
+      data: tableResponse
     }
   }
 
@@ -632,7 +643,7 @@ export class RestaurantsService {
       return restaurantResult
     }
 
-    const tables = await this.tableRepository.find({ where: { restaurant: { id: restaurantId } }, relations: ['restaurant'] })
+    const tables = await this.tableRepository.find({ where: { restaurant: { id: restaurantId } }, relations: ['restaurant'], order: { tableNumber: 'ASC' } })
 
     if (tables.length === 0) {
       return {
@@ -662,6 +673,63 @@ export class RestaurantsService {
       message: RestaurantMessages[RestaurantCodes.RESTAURANT_TABLES_FOUND].en,
       httpCode: HttpStatus.OK,
       data: mappedTables
+    }
+  }
+
+  async updateRestaurantTable(tableId: string, restaurantId: string, userId: string, body: UpdateRestaurantTableRequestDto) {
+    const { tableNumber, seatingCapacity, isAvailable, location } = body
+
+    this.logger.log(`Updating table for restaurant ${restaurantId}`)
+
+    await this.findRestaurantByIdAndUser(restaurantId, userId, ['tables'])
+
+    const table = await this.tableRepository.findOne({ where: { id: tableId, restaurant: { id: restaurantId } }, relations: ['restaurant'] })
+
+    if (!table) {
+      return {
+        success: false,
+        code: RestaurantCodes.RESTAURANT_TABLE_NOT_FOUND,
+        message: RestaurantMessages[RestaurantCodes.RESTAURANT_TABLE_NOT_FOUND].en,
+        httpCode: HttpStatus.NOT_FOUND,
+        data: null
+      }
+    }
+
+    if (tableNumber !== undefined) {
+      table.tableNumber = tableNumber
+    }
+
+    if (seatingCapacity !== undefined) {
+      table.seatingCapacity = seatingCapacity
+    }
+
+    if (isAvailable !== undefined) {
+      table.isAvailable = isAvailable
+    }
+
+    if (location !== undefined) {
+      table.location = location
+    }
+
+    await this.tableRepository.save(table)
+
+    this.logger.log('Restaurant table updated')
+
+    const tableResponse: IUpsertRestaurantsTableResponse = {
+      id: table.id,
+      tableNumber: table.tableNumber,
+      seatingCapacity: table.seatingCapacity,
+      isAvailable: table.isAvailable,
+      location: table.location,
+      qrCode: table.qrCode
+    }
+
+    return {
+      success: true,
+      code: RestaurantCodes.RESTAURANT_TABLE_UPDATED,
+      message: RestaurantMessages[RestaurantCodes.RESTAURANT_TABLE_UPDATED].en,
+      httpCode: HttpStatus.OK,
+      data: tableResponse
     }
   }
 }

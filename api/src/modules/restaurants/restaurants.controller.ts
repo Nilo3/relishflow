@@ -117,6 +117,16 @@ export class RestaurantsController {
     return await this.restaurantsService.update(id, body, file)
   }
 
+  @Patch('table/:id/:restaurantId')
+  @ApiBearerAuth()
+  @Roles(UserRoles.SuperAdmin, UserRoles.Tenant)
+  @ApiHeader({ name: 'x-refresh-token' })
+  @ApiHeader({ name: 'x-id-token' })
+  @ApiOperation({ summary: 'Actualizar una mesa de un restaurante' })
+  async updateRestaurantTable(@Query('id') id: string, @Query('restaurantId') restaurantId: string, @UserId() userId: string, @Body() body: CreateRestaurantTableRequestDto) {
+    return await this.restaurantsService.updateRestaurantTable(id, restaurantId, userId, body)
+  }
+
   // Métodos de eliminación
   @Delete('delete-restaurant-schedule/:id')
   @ApiBearerAuth()

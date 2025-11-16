@@ -29,7 +29,10 @@ export enum RestaurantCodes {
   STAFF_ALREADY_EXISTS = 'STAFF_ALREADY_EXISTS',
   ERROR_CREATING_STAFF = 'ERROR_CREATING_STAFF',
   RESTAURANT_TABLES_NOT_FOUND = 'RESTAURANT_TABLES_NOT_FOUND',
-  RESTAURANT_TABLES_FOUND = 'RESTAURANT_TABLES_FOUND'
+  RESTAURANT_TABLES_FOUND = 'RESTAURANT_TABLES_FOUND',
+  RESTAURANT_TABLE_NOT_FOUND = 'RESTAURANT_TABLE_NOT_FOUND',
+  RESTAURANT_TABLE_FOUND = 'RESTAURANT_TABLE_FOUND',
+  RESTAURANT_TABLE_UPDATED = 'RESTAURANT_TABLE_UPDATED',
 }
 
 export const RestaurantMessages: Record<RestaurantCodes, Record<string, string>> = {
@@ -156,5 +159,17 @@ export const RestaurantMessages: Record<RestaurantCodes, Record<string, string>>
   [RestaurantCodes.RESTAURANT_TABLES_FOUND]: {
     en: 'Restaurant tables found',
     es: 'Mesas del restaurante encontradas'
+  },
+  [RestaurantCodes.RESTAURANT_TABLE_NOT_FOUND]: {
+    en: 'Restaurant table not found',
+    es: 'Mesa del restaurante no encontrada'
+  },
+  [RestaurantCodes.RESTAURANT_TABLE_FOUND]: {
+    en: 'Restaurant table found',
+    es: 'Mesa del restaurante encontrada'
+  },
+  [RestaurantCodes.RESTAURANT_TABLE_UPDATED]: {
+    en: 'Restaurant table updated successfully',
+    es: 'Mesa del restaurante actualizada exitosamente'
   }
 }
