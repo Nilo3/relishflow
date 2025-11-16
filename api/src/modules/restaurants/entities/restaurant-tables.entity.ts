@@ -1,7 +1,9 @@
 import { Column, Entity, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm'
-import { Restaurant } from './restaurant.entity'
+
 import { Order } from 'src/modules/orders/entities/order.entity'
 import { Bill } from 'src/modules/orders/entities/bill.entity'
+
+import { Restaurant } from './restaurant.entity'
 
 @Entity('restaurant_tables')
 export class RestaurantTable {
