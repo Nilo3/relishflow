@@ -20,6 +20,7 @@ import { CreateStaffRequestDto } from './dtos/create-staff-request.dto'
 import { RestaurantSchedule } from './entities/restaurant-schedule.entity'
 import { CreateRestaurantScheduleDto } from './dtos/create-restaurant-schedule.dto'
 import { ScheduleHelpers } from './helpers/schedule.helpers'
+import { CreateRestaurantTableRequestDto } from './dtos/create-restaurant-table-request.dto'
 
 @Injectable()
 export class RestaurantsService {
@@ -467,5 +468,10 @@ export class RestaurantsService {
       httpCode: HttpStatus.OK,
       data: null
     }
+  }
+
+  // Métodos para las mesas
+  async createRestaurantTable(body: CreateRestaurantTableRequestDto) {
+    return body
   }
 }
