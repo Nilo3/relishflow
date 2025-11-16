@@ -21,6 +21,7 @@ import { RestaurantSchedule } from './entities/restaurant-schedule.entity'
 import { CreateRestaurantScheduleDto } from './dtos/create-restaurant-schedule.dto'
 import { ScheduleHelpers } from './helpers/schedule.helpers'
 import { CreateRestaurantTableRequestDto } from './dtos/create-restaurant-table-request.dto'
+import { RestaurantTable } from './entities/restaurant-tables.entity'
 
 @Injectable()
 export class RestaurantsService {
@@ -32,6 +33,8 @@ export class RestaurantsService {
   private readonly staffRepository: Repository<RestaurantStaffMember>
   @InjectRepository(RestaurantSchedule)
   private readonly restaurantScheduleRepository: Repository<RestaurantSchedule>
+  @InjectRepository(RestaurantTable)
+  private readonly tableRepository: Repository<RestaurantTable>
 
   constructor(
     private readonly s3Service: S3Service,
@@ -196,6 +199,28 @@ export class RestaurantsService {
       success: true,
       code: RestaurantCodes.RESTAURANT_UPDATED,
       message: RestaurantMessages[RestaurantCodes.RESTAURANT_UPDATED].en,
+      httpCode: HttpStatus.OK,
+      data: restaurant
+    }
+  }
+
+  private async findRestaurantByIdAndUser(restaurantId: string, userId: string) {
+    const restaurant = await this.restaurantRepository.findOne({ where: { id: restaurantId, user: { id: userId } }, relations: ['user'] })
+
+    if (!restaurant) {
+      return {
+        success: false,
+        code: RestaurantCodes.RESTAURANT_NOT_FOUND,
+        message: RestaurantMessages[RestaurantCodes.RESTAURANT_NOT_FOUND].en,
+        httpCode: HttpStatus.NOT_FOUND,
+        data: null
+      }
+    }
+
+    return {
+      success: true,
+      code: RestaurantCodes.RESTAURANT_FOUND,
+      message: RestaurantMessages[RestaurantCodes.RESTAURANT_FOUND].en,
       httpCode: HttpStatus.OK,
       data: restaurant
     }
@@ -471,7 +496,41 @@ export class RestaurantsService {
   }
 
   // Métodos para las mesas
-  async createRestaurantTable(body: CreateRestaurantTableRequestDto) {
-    return body
+  async createRestaurantTable(restaurantId: string, userId: string, body: CreateRestaurantTableRequestDto) {
+    const { tableNumber, seatingCapacity, isAvailable, location } = body
+
+    this.logger.log(`Creating table for restaurant ${restaurantId}`)
+
+    const restaurantResult = await this.findRestaurantByIdAndUser(restaurantId, userId)
+
+    if (!restaurantResult.success || !restaurantResult.data) {
+      return restaurantResult
+    }
+
+    const restaurant = restaurantResult.data
+
+    // Contar las mesas existentes para generar el número de mesa por defecto
+    const existingTablesCount = await this.tableRepository.count({ where: { restaurant: { id: restaurantId } } })
+
+    const table = this.tableRepository.create({
+      tableNumber: tableNumber ?? existingTablesCount + 1,
+      seatingCapacity: seatingCapacity,
+      isAvailable: isAvailable,
+      location: location,
+      qrCode: `QR-${restaurantId}-${Date.now().toString()}`,
+      restaurant
+    })
+
+    await this.tableRepository.save(table)
+
+    this.logger.log('Restaurant table created')
+
+    return {
+      success: true,
+      code: RestaurantCodes.RESTAURANT_TABLE_CREATED,
+      message: RestaurantMessages[RestaurantCodes.RESTAURANT_TABLE_CREATED].en,
+      httpCode: HttpStatus.CREATED,
+      data: table
+    }
   }
 }

@@ -1,6 +1,7 @@
 export enum RestaurantCodes {
   RESTAURANT_CREATED = 'RESTAURANT_CREATED',
   RESTAURANT_CREATED_WITHOUT_LOGO = 'RESTAURANT_CREATED_WITHOUT_LOGO',
+  RESTAURANT_TABLE_CREATED = 'RESTAURANT_TABLE_CREATED',
   SCHEDULE_CREATED = 'SCHEDULE_CREATED',
   SCHEDULES_FOUND = 'SCHEDULES_FOUND',
   SCHEDULES_NOT_FOUND = 'SCHEDULES_NOT_FOUND',
@@ -35,6 +36,10 @@ export const RestaurantMessages: Record<RestaurantCodes, Record<string, string>>
   [RestaurantCodes.RESTAURANT_CREATED_WITHOUT_LOGO]: {
     en: 'Restaurant created successfully but logo upload failed',
     es: 'Restaurante creado exitosamente pero falló la subida del logo'
+  },
+  [RestaurantCodes.RESTAURANT_TABLE_CREATED]: {
+    en: 'Restaurant table created successfully',
+    es: 'Mesa del restaurante creada exitosamente'
   },
   [RestaurantCodes.INVALID_SCHEDULE_FORMAT]: {
     en: 'Invalid schedule time format. Use HH:mm format (00:00-23:59)',
