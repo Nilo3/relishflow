@@ -11,6 +11,7 @@ import { CreateRestaurantRequestDto } from './dtos/create-restaurant-request.dto
 import { UpdateRestaurantRequestDto } from './dtos/update-restaurant-request.dto'
 import { CreateStaffRequestDto } from './dtos/create-staff-request.dto'
 import { CreateRestaurantScheduleDto } from './dtos/create-restaurant-schedule.dto'
+import { CreateRestaurantTableRequestDto } from './dtos/create-restaurant-table-request.dto'
 
 @ApiTags('Restaurants')
 @Controller('restaurants')
@@ -51,6 +52,16 @@ export class RestaurantsController {
     return await this.restaurantsService.createSchedule(id, body)
   }
 
+  @Post('create-table/:id')
+  @ApiBearerAuth()
+  @Roles(UserRoles.SuperAdmin, UserRoles.Tenant)
+  @ApiHeader({ name: 'x-refresh-token' })
+  @ApiHeader({ name: 'x-id-token' })
+  @ApiOperation({ summary: 'Crear una mesa para un restaurante' })
+  async createRestaurantTable(@Query('id') id: string, @UserId() userId: string, @Body() body: CreateRestaurantTableRequestDto) {
+    return await this.restaurantsService.createRestaurantTable(id, userId, body)
+  }
+
   // Métodos de obtención
   @Get('find-all')
   @ApiBearerAuth()
@@ -82,6 +93,16 @@ export class RestaurantsController {
     return await this.restaurantsService.findAllSchedules(userId, id)
   }
 
+  @Get('find-all-tables/:id')
+  @ApiBearerAuth()
+  @Roles(UserRoles.SuperAdmin, UserRoles.Tenant)
+  @ApiHeader({ name: 'x-refresh-token' })
+  @ApiHeader({ name: 'x-id-token' })
+  @ApiOperation({ summary: 'Obtener todas las mesas de un restaurante' })
+  async findAllTables(@Query('id') id: string, @UserId() userId: string) {
+    return await this.restaurantsService.findAllTables(id, userId)
+  }
+
   // Métodos de actualización
   @Patch('update/:id')
   @ApiBearerAuth()
@@ -94,6 +115,16 @@ export class RestaurantsController {
   @UseInterceptors(FileInterceptor('file'))
   async updateRestaurant(@Query('id') id: string, @Body() body: UpdateRestaurantRequestDto, @UploadedFile() file?: Express.Multer.File) {
     return await this.restaurantsService.update(id, body, file)
+  }
+
+  @Patch('table/:id/:restaurantId')
+  @ApiBearerAuth()
+  @Roles(UserRoles.SuperAdmin, UserRoles.Tenant)
+  @ApiHeader({ name: 'x-refresh-token' })
+  @ApiHeader({ name: 'x-id-token' })
+  @ApiOperation({ summary: 'Actualizar una mesa de un restaurante' })
+  async updateRestaurantTable(@Query('id') id: string, @Query('restaurantId') restaurantId: string, @UserId() userId: string, @Body() body: CreateRestaurantTableRequestDto) {
+    return await this.restaurantsService.updateRestaurantTable(id, restaurantId, userId, body)
   }
 
   // Métodos de eliminación

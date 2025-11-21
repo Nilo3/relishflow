@@ -1,11 +1,14 @@
 import { HttpStatus, Injectable, Logger } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
 import { Repository } from 'typeorm'
+import * as QRCodeLib from 'qrcode'
 import { RestaurantCodes, RestaurantMessages } from '@shared/modules/restaurants/restaurants.contants'
 import { RestaurantStatus } from '@shared/modules/restaurants/enums/restaurant.status.enum'
 import { IFindAllRestaurantsResponse } from '@shared/modules/restaurants/interfaces/find-all-restaurants-response.interface'
 import { IFindAllStaffResponse } from '@shared/modules/restaurants/interfaces/find-all-staff-response.interface'
 import { IFindAllRestaurantsSchedule } from '@shared/modules/restaurants/interfaces/find-all-restaurants-schedule.interface'
+import { IFindAllRestaurantsTables } from '@shared/modules/restaurants/interfaces/find-all-restaurants-tables-response.interface'
+import { IUpsertRestaurantsTableResponse } from '@shared/modules/restaurants/interfaces/upsert-restaurants-table-response.interface'
 
 import { User } from 'src/modules/users/entities/user.entity'
 
@@ -20,6 +23,9 @@ import { CreateStaffRequestDto } from './dtos/create-staff-request.dto'
 import { RestaurantSchedule } from './entities/restaurant-schedule.entity'
 import { CreateRestaurantScheduleDto } from './dtos/create-restaurant-schedule.dto'
 import { ScheduleHelpers } from './helpers/schedule.helpers'
+import { CreateRestaurantTableRequestDto } from './dtos/create-restaurant-table-request.dto'
+import { RestaurantTable } from './entities/restaurant-tables.entity'
+import { UpdateRestaurantTableRequestDto } from './dtos/update-restaurant-table-request.dto'
 
 @Injectable()
 export class RestaurantsService {
@@ -31,6 +37,8 @@ export class RestaurantsService {
   private readonly staffRepository: Repository<RestaurantStaffMember>
   @InjectRepository(RestaurantSchedule)
   private readonly restaurantScheduleRepository: Repository<RestaurantSchedule>
+  @InjectRepository(RestaurantTable)
+  private readonly tableRepository: Repository<RestaurantTable>
 
   constructor(
     private readonly s3Service: S3Service,
@@ -195,6 +203,49 @@ export class RestaurantsService {
       success: true,
       code: RestaurantCodes.RESTAURANT_UPDATED,
       message: RestaurantMessages[RestaurantCodes.RESTAURANT_UPDATED].en,
+      httpCode: HttpStatus.OK,
+      data: restaurant
+    }
+  }
+
+  /**
+   * Obtener un restaurante por ID y usuario.
+   * @param restaurantId - ID del restaurante
+   * @param userId - ID del usuario
+   * @param relations - Relaciones a incluir en la consulta
+   * @returns Restaurante encontrado o error si no existe
+   */
+  private async findRestaurantByIdAndUser(restaurantId: string, userId: string, relations?: string[]) {
+    // Definir relaciones por defecto si no se provee un arreglo
+    const defaultRelations = ['user', 'staffMembers', 'tables', 'menus', 'products', 'schedules']
+
+    // Aseguramos que 'user' siempre esté presente en el arreglo de relaciones,
+    // incluso si el llamador pasa su propio arreglo de relaciones.
+    let queryRelations: string[]
+
+    if (relations) {
+      // Unir las relaciones solicitadas con 'user' y eliminar duplicados
+      queryRelations = Array.from(new Set([...relations, 'user']))
+    } else {
+      queryRelations = defaultRelations
+    }
+
+    const restaurant = await this.restaurantRepository.findOne({ where: { id: restaurantId, user: { id: userId } }, relations: queryRelations })
+
+    if (!restaurant) {
+      return {
+        success: false,
+        code: RestaurantCodes.RESTAURANT_NOT_FOUND,
+        message: RestaurantMessages[RestaurantCodes.RESTAURANT_NOT_FOUND].en,
+        httpCode: HttpStatus.NOT_FOUND,
+        data: null
+      }
+    }
+
+    return {
+      success: true,
+      code: RestaurantCodes.RESTAURANT_FOUND,
+      message: RestaurantMessages[RestaurantCodes.RESTAURANT_FOUND].en,
       httpCode: HttpStatus.OK,
       data: restaurant
     }
@@ -466,6 +517,219 @@ export class RestaurantsService {
       message: 'Schedule deleted successfully',
       httpCode: HttpStatus.OK,
       data: null
+    }
+  }
+
+  // Métodos para las mesas
+
+  /**
+   * Cuenta el número de mesas existentes para un restaurante dado.
+   * @param restaurantId - ID del restaurante
+   * @returns Número de mesas existentes
+   */
+  private async countExistingTables(restaurantId: string): Promise<number> {
+    const count = await this.tableRepository.count({ where: { restaurant: { id: restaurantId } } })
+
+    return count
+  }
+
+  /**
+   * Crea el código QR para una mesa de restaurante.
+   * @param restaurantId - ID del restaurante
+   * @param tableNumber - Número de la mesa
+   * @returns Buffer con la imagen PNG del código QR
+   */
+  private async createTableQrCode(restaurantId: string, tableNumber: number): Promise<Buffer> {
+    const qrData = `${process.env.FRONTEND_URL ?? 'http://localhost:4000/'}${restaurantId}/${tableNumber.toString()}`
+    const qrCodeImage = await QRCodeLib.toBuffer(qrData, {
+      errorCorrectionLevel: 'H',
+      type: 'png',
+      margin: 1,
+      width: 300
+    })
+
+    return qrCodeImage
+  }
+
+  /**
+   *  Sube el código QR de una mesa a S3.
+   * @param restaurantId - ID del restaurante
+   * @param tableNumber - Número de la mesa
+   * @returns url del código QR en S3
+   */
+  private async uploadTableQrCode(restaurantId: string, tableNumber: number, qrCodeBuffer: Buffer) {
+    const qrPath = `restaurants/${restaurantId}/tables/${tableNumber.toString()}/qr`
+    const qrUploadResponse = await this.s3Service.upload(qrPath, qrCodeBuffer, 'image/png')
+
+    if (!qrUploadResponse.success || !qrUploadResponse.data) {
+      this.logger.error('Error uploading QR code to S3')
+
+      return {
+        success: false,
+        code: RestaurantCodes.ERROR_CREATING_RESTAURANT_TABLE,
+        message: RestaurantMessages[RestaurantCodes.ERROR_CREATING_RESTAURANT_TABLE].en,
+        httpCode: HttpStatus.BAD_REQUEST,
+        data: null
+      }
+    }
+
+    return qrUploadResponse
+  }
+
+  async createRestaurantTable(restaurantId: string, userId: string, body: CreateRestaurantTableRequestDto) {
+    const { tableNumber, seatingCapacity, isAvailable, location } = body
+
+    this.logger.log(`Creating table for restaurant ${restaurantId}`)
+
+    const restaurantResult = await this.findRestaurantByIdAndUser(restaurantId, userId, ['tables'])
+
+    if (!restaurantResult.success || !restaurantResult.data) {
+      return restaurantResult
+    }
+
+    const restaurant = restaurantResult.data
+
+    // Contar las mesas existentes para generar el número de mesa por defecto
+    const existingTablesCount = await this.countExistingTables(restaurantId)
+    const finalTableNumber = tableNumber ?? existingTablesCount + 1
+
+    // Generar el código QR como imagen
+    const qrCodeBuffer = await this.createTableQrCode(restaurantId, finalTableNumber)
+
+    // Subir la imagen QR a S3
+    const qrUploadResponse = await this.uploadTableQrCode(restaurantId, finalTableNumber, qrCodeBuffer)
+
+    if (!qrUploadResponse.success || !qrUploadResponse.data) {
+      return qrUploadResponse
+    }
+
+    const table = this.tableRepository.create({
+      tableNumber: finalTableNumber,
+      seatingCapacity: seatingCapacity,
+      isAvailable: isAvailable,
+      location: location,
+      qrCode: qrUploadResponse.data,
+      restaurant
+    })
+
+    await this.tableRepository.save(table)
+
+    this.logger.log('Restaurant table created')
+
+    const tableResponse: IUpsertRestaurantsTableResponse = {
+      id: table.id,
+      tableNumber: table.tableNumber,
+      seatingCapacity: table.seatingCapacity,
+      isAvailable: table.isAvailable,
+      location: table.location,
+      qrCode: table.qrCode
+    }
+
+    return {
+      success: true,
+      code: RestaurantCodes.RESTAURANT_TABLE_CREATED,
+      message: RestaurantMessages[RestaurantCodes.RESTAURANT_TABLE_CREATED].en,
+      httpCode: HttpStatus.CREATED,
+      data: tableResponse
+    }
+  }
+
+  async findAllTables(restaurantId: string, userId: string) {
+    this.logger.log(`Finding all tables for restaurant: ${restaurantId}`)
+
+    const restaurantResult = await this.findRestaurantByIdAndUser(restaurantId, userId, ['tables'])
+
+    if (!restaurantResult.success || !restaurantResult.data) {
+      return restaurantResult
+    }
+
+    const tables = await this.tableRepository.find({ where: { restaurant: { id: restaurantId } }, relations: ['restaurant'], order: { tableNumber: 'ASC' } })
+
+    if (tables.length === 0) {
+      return {
+        success: false,
+        code: RestaurantCodes.RESTAURANT_TABLES_NOT_FOUND,
+        message: RestaurantMessages[RestaurantCodes.RESTAURANT_TABLES_NOT_FOUND].en,
+        httpCode: HttpStatus.NOT_FOUND,
+        data: []
+      }
+    }
+
+    // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
+    this.logger.log(`Found ${tables.length} tables for restaurant: ${restaurantId}`)
+
+    const mappedTables: IFindAllRestaurantsTables[] = tables.map((table) => ({
+      id: table.id,
+      tableNumber: table.tableNumber,
+      seatingCapacity: table.seatingCapacity,
+      isAvailable: table.isAvailable,
+      location: table.location,
+      qrCode: table.qrCode
+    }))
+
+    return {
+      success: true,
+      code: RestaurantCodes.RESTAURANT_TABLES_FOUND,
+      message: RestaurantMessages[RestaurantCodes.RESTAURANT_TABLES_FOUND].en,
+      httpCode: HttpStatus.OK,
+      data: mappedTables
+    }
+  }
+
+  async updateRestaurantTable(tableId: string, restaurantId: string, userId: string, body: UpdateRestaurantTableRequestDto) {
+    const { tableNumber, seatingCapacity, isAvailable, location } = body
+
+    this.logger.log(`Updating table for restaurant ${restaurantId}`)
+
+    await this.findRestaurantByIdAndUser(restaurantId, userId, ['tables'])
+
+    const table = await this.tableRepository.findOne({ where: { id: tableId, restaurant: { id: restaurantId } }, relations: ['restaurant'] })
+
+    if (!table) {
+      return {
+        success: false,
+        code: RestaurantCodes.RESTAURANT_TABLE_NOT_FOUND,
+        message: RestaurantMessages[RestaurantCodes.RESTAURANT_TABLE_NOT_FOUND].en,
+        httpCode: HttpStatus.NOT_FOUND,
+        data: null
+      }
+    }
+
+    if (tableNumber !== undefined) {
+      table.tableNumber = tableNumber
+    }
+
+    if (seatingCapacity !== undefined) {
+      table.seatingCapacity = seatingCapacity
+    }
+
+    if (isAvailable !== undefined) {
+      table.isAvailable = isAvailable
+    }
+
+    if (location !== undefined) {
+      table.location = location
+    }
+
+    await this.tableRepository.save(table)
+
+    this.logger.log('Restaurant table updated')
+
+    const tableResponse: IUpsertRestaurantsTableResponse = {
+      id: table.id,
+      tableNumber: table.tableNumber,
+      seatingCapacity: table.seatingCapacity,
+      isAvailable: table.isAvailable,
+      location: table.location,
+      qrCode: table.qrCode
+    }
+
+    return {
+      success: true,
+      code: RestaurantCodes.RESTAURANT_TABLE_UPDATED,
+      message: RestaurantMessages[RestaurantCodes.RESTAURANT_TABLE_UPDATED].en,
+      httpCode: HttpStatus.OK,
+      data: tableResponse
     }
   }
 }
