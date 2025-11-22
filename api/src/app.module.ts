@@ -13,6 +13,7 @@ import { RolesInterceptor } from './interceptors/role.interceptor'
 import { RestaurantsModule } from './modules/restaurants/restaurants.module'
 import { MenusModule } from './modules/menus/menus.module'
 import { CommonModule } from './modules/commons/common.module'
+import { ProductsModule } from './modules/products/products.module'
 
 @Module({
   imports: [
@@ -45,7 +46,8 @@ import { CommonModule } from './modules/commons/common.module'
     MenusModule,
     CommonModule,
     S3Module,
-    HealthModule
+    HealthModule,
+    ProductsModule
   ],
   providers: [
     {
