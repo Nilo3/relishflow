@@ -44,4 +44,3 @@ export class Product {
   @OneToMany(() => ProductOrder, (productOrder) => productOrder.product)
   productOrders: ProductOrder[]
 }
-

@@ -1,4 +1,5 @@
 import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm'
+
 import { ProductIngredients } from './product-ingredients.entity'
 
 @Entity('ingredients')
@@ -12,3 +13,4 @@ export class Ingredients {
   @OneToMany(() => ProductIngredients, (productIngredients) => productIngredients.ingredient)
   products: ProductIngredients[]
 }
+

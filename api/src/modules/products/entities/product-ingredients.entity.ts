@@ -1,4 +1,5 @@
 import { Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm'
+
 import { Product } from './product.entity'
 import { Ingredients } from './ingredients.entity'
 
@@ -13,3 +14,4 @@ export class ProductIngredients {
   @ManyToOne(() => Ingredients, (ingredient) => ingredient.products)
   ingredient: Ingredients
 }
+
