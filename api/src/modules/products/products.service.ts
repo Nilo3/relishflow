@@ -2,6 +2,7 @@ import { HttpStatus, Injectable, Logger } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
 import { Repository } from 'typeorm'
 import { ProductCodes, ProductMessages } from '@shared/modules/products/products.constants'
+import { ICreateProductCategoryResponse } from '@shared/modules/products/interfaces/create-product-category-response.interface'
 
 import { RestaurantsService } from '../restaurants/restaurants.service'
 
@@ -64,7 +65,7 @@ export class ProductsService {
     this.logger.log(`Category created with ID: ${savedCategory.id}`)
 
     // Retornamos solo la información necesaria
-    const response = {
+    const response: ICreateProductCategoryResponse = {
       id: savedCategory.id,
       name: savedCategory.name,
       icon: savedCategory.icon
