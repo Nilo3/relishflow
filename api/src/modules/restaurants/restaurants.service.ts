@@ -215,7 +215,7 @@ export class RestaurantsService {
    * @param relations - Relaciones a incluir en la consulta
    * @returns Restaurante encontrado o error si no existe
    */
-  private async findRestaurantByIdAndUser(restaurantId: string, userId: string, relations?: string[]) {
+  async findRestaurantByIdAndUser(restaurantId: string, userId: string, relations?: string[]) {
     // Definir relaciones por defecto si no se provee un arreglo
     const defaultRelations = ['user', 'staffMembers', 'tables', 'menus', 'products', 'schedules']
 
