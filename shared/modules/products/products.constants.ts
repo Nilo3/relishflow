@@ -14,7 +14,8 @@ export enum ProductCodes {
   CATEGORY_CREATED = 'CATEGORY_CREATED',
   CATEGORY_ALREADY_EXISTS = 'CATEGORY_ALREADY_EXISTS',
   CATEGORY_NOT_FOUND = 'CATEGORY_NOT_FOUND',
-  CATEGORY_DELETED = 'CATEGORY_DELETED'
+  CATEGORY_DELETED = 'CATEGORY_DELETED',
+  CATEGORY_UPDATED = 'CATEGORY_UPDATED'
 }
 
 export const ProductMessages: Record<ProductCodes, Record<string, string>> = {
@@ -81,5 +82,9 @@ export const ProductMessages: Record<ProductCodes, Record<string, string>> = {
   [ProductCodes.CATEGORY_DELETED]: {
     en: 'Category deleted',
     es: 'Categoria eliminada exitosamente'
+  },
+  [ProductCodes.CATEGORY_UPDATED]: {
+    en: 'Category updated',
+    es: 'Categoria actualizada exitosamente'
   }
 }; 

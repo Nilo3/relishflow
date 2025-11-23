@@ -6,10 +6,11 @@ import { ICreateProductCategoryResponse } from '@shared/modules/products/interfa
 
 import { RestaurantsService } from '../restaurants/restaurants.service'
 
-import { CreateProductCategoryRequestDto } from './dtos/create-product-category.request.dto'
+import { CreateProductCategoryRequestDto } from './dtos/create-product-category-request.dto'
 import { Product } from './entities/product.entity'
 import { ProductCategory } from './entities/product-category.entity'
 import { ProductIngredients } from './entities/product-ingredients.entity'
+import { UpdateProductCategoryRequestDto } from './dtos/update-product-category-request.dto'
 
 @Injectable()
 export class ProductsService {
@@ -76,6 +77,50 @@ export class ProductsService {
       code: ProductCodes.CATEGORY_CREATED,
       message: ProductMessages[ProductCodes.CATEGORY_CREATED].en,
       httpCode: HttpStatus.CREATED,
+      data: response
+    }
+  }
+
+  async updateProductCategory(id: string, body: UpdateProductCategoryRequestDto) {
+    const { name, icon } = body
+
+    this.logger.log(`Searching Category with ID: ${id}`)
+
+    const category = await this.productCategoryRepository.findOne({ where: { id } })
+
+    if (!category) {
+      return {
+        success: false,
+        code: ProductCodes.CATEGORY_NOT_FOUND,
+        message: ProductMessages[ProductCodes.CATEGORY_NOT_FOUND].en,
+        httpCode: HttpStatus.NOT_FOUND,
+        data: null
+      }
+    }
+
+    if (name) {
+      category.name = name
+    }
+
+    if (icon) {
+      category.icon = icon
+    }
+
+    const categoryUpdated = await this.productCategoryRepository.save(category)
+
+    this.logger.log('Category updated')
+
+    const response: ICreateProductCategoryResponse = {
+      id: categoryUpdated.id,
+      name: categoryUpdated.name,
+      icon: categoryUpdated.icon
+    }
+
+    return {
+      success: true,
+      code: ProductCodes.CATEGORY_UPDATED,
+      message: ProductMessages[ProductCodes.CATEGORY_UPDATED].en,
+      httpCode: HttpStatus.OK,
       data: response
     }
   }
