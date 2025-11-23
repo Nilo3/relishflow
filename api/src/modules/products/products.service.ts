@@ -79,4 +79,43 @@ export class ProductsService {
       data: response
     }
   }
+
+  async deleteProductCategory(userId: string, id: string, restaurantId: string) {
+    this.logger.log('Searching restaurant...')
+
+    const restaurantResult = await this.restaurantService.findRestaurantByIdAndUser(restaurantId, userId)
+
+    if (!restaurantResult.success || !restaurantResult.data) {
+      return restaurantResult
+    }
+
+    const restaurant = restaurantResult.data
+
+    this.logger.log('Deleting product category...')
+
+    // Verificar si ya existe una categoria con el mismo id en un restaurante
+    const existingCategory = await this.productCategoryRepository.findOne({ where: { id, restaurant: { id: restaurant.id } }, relations: ['restaurant'] })
+
+    if (!existingCategory) {
+      return {
+        success: false,
+        code: ProductCodes.CATEGORY_NOT_FOUND,
+        message: ProductMessages[ProductCodes.CATEGORY_NOT_FOUND].en,
+        httpCode: HttpStatus.NOT_FOUND,
+        data: null
+      }
+    }
+
+    await this.productCategoryRepository.remove(existingCategory)
+
+    this.logger.log('Category deleted')
+
+    return {
+      success: true,
+      code: ProductCodes.CATEGORY_DELETED,
+      message: ProductMessages[ProductCodes.CATEGORY_DELETED].en,
+      httpCode: HttpStatus.OK,
+      data: null
+    }
+  }
 }

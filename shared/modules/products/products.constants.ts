@@ -12,7 +12,9 @@ export enum ProductCodes {
   ERROR_FINDING_PRODUCT = 'ERROR_FINDING_PRODUCT',
   ERROR_FINDING_PRODUCTS = 'ERROR_FINDING_PRODUCTS',
   CATEGORY_CREATED = 'CATEGORY_CREATED',
-  CATEGORY_ALREADY_EXISTS = 'CATEGORY_ALREADY_EXISTS'
+  CATEGORY_ALREADY_EXISTS = 'CATEGORY_ALREADY_EXISTS',
+  CATEGORY_NOT_FOUND = 'CATEGORY_NOT_FOUND',
+  CATEGORY_DELETED = 'CATEGORY_DELETED'
 }
 
 export const ProductMessages: Record<ProductCodes, Record<string, string>> = {
@@ -71,5 +73,13 @@ export const ProductMessages: Record<ProductCodes, Record<string, string>> = {
   [ProductCodes.CATEGORY_ALREADY_EXISTS]: {
     en: 'Category already exists',
     es: 'Ya existe una categoria con este nombre'
+  },
+  [ProductCodes.CATEGORY_NOT_FOUND]: {
+    en: 'Category not found',
+    es: 'Categoria no encontrada'
+  },
+  [ProductCodes.CATEGORY_DELETED]: {
+    en: 'Category deleted',
+    es: 'Categoria eliminada exitosamente'
   }
 }; 

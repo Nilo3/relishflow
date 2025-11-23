@@ -1,4 +1,4 @@
-import { Post, Body, Controller } from '@nestjs/common'
+import { Post, Body, Controller, Delete, Query } from '@nestjs/common'
 import { ApiOperation, ApiTags, ApiBearerAuth, ApiHeader } from '@nestjs/swagger'
 import { UserRoles } from '@shared/modules/users/enums/roles.enum'
 
@@ -22,5 +22,16 @@ export class ProductsController {
   @ApiOperation({ summary: 'Crear una categoria' })
   async createCategory(@UserId() userId: string, @Body() body: CreateProductCategoryRequestDto) {
     return await this.productsService.createProductCategory(userId, body)
+  }
+
+  // Métodos de eliminación
+  @Delete('category/:id/:restaurantId')
+  @ApiBearerAuth()
+  @Roles(UserRoles.SuperAdmin, UserRoles.Tenant)
+  @ApiHeader({ name: 'x-refresh-token' })
+  @ApiHeader({ name: 'x-id-token' })
+  @ApiOperation({ summary: 'Eliminar una categoria' })
+  async deleteCategory(@UserId() userId: string, @Query('id') id: string, @Query('restaurantId') restaurantId: string) {
+    return await this.productsService.deleteProductCategory(userId, id, restaurantId)
   }
 }
