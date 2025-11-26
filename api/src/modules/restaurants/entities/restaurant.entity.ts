@@ -4,6 +4,7 @@ import { RestaurantStatus } from '@shared/modules/restaurants/enums/restaurant.s
 import { User } from 'src/modules/users/entities/user.entity'
 import { Menu } from 'src/modules/menus/entities/menu.entity'
 import { Product } from 'src/modules/products/entities/product.entity'
+import { ProductCategory } from 'src/modules/products/entities/product-category.entity'
 
 import { RestaurantSchedule } from './restaurant-schedule.entity'
 import { RestaurantTable } from './restaurant-tables.entity'
@@ -59,4 +60,7 @@ export class Restaurant {
 
   @OneToMany(() => Product, (product) => product.restaurant)
   products: Product[]
+
+  @OneToMany(() => ProductCategory, (category) => category.restaurant)
+  categories: ProductCategory[]
 }
